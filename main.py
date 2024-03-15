@@ -5,7 +5,12 @@ from utils import printing
 
 from docx import Document
 from text_checker import TextChecker1, TextChecker2
-from document_checker import DocumentChecker1, DocumentChecker2, DocumentChecker3
+from document_checker import (
+    DocumentChecker1,
+    DocumentChecker2,
+    DocumentChecker3,
+    DocumentChecker4,
+)
 
 
 def get_all_text(doc: Document) -> tuple[str]:
@@ -16,7 +21,12 @@ def get_all_text(doc: Document) -> tuple[str]:
 
 
 TEXT_CHECKER_LIST = [TextChecker1, TextChecker2]
-DOCUMENT_CHECKER_LIST = [DocumentChecker1, DocumentChecker2, DocumentChecker3]
+DOCUMENT_CHECKER_LIST = [
+    DocumentChecker1,
+    DocumentChecker2,
+    DocumentChecker3,
+    DocumentChecker4,
+]
 
 
 def main(path, output, logfile=None):

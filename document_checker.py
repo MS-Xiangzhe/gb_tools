@@ -153,3 +153,31 @@ class DocumentChecker3(BasicChecker):
             and not paragraph.paragraph_format.right_indent
             and paragraph.paragraph_format.line_spacing == 1
         )
+
+
+class DocumentChecker4(BasicChecker):
+    @staticmethod
+    def score(paragraph, all_text: tuple[str], line_number: int) -> int:
+        if not paragraph.text.strip():
+            return 1
+        return 0
+
+    def process(self, para, all_text: tuple[str], line_number: int) -> str | None:
+        if self.score(para, all_text, line_number) > 0:
+            printing("Paragraph text is empty: ", para.text)
+            answer = input("Remove it? (Y/n)")
+            answer = answer.strip().lower()
+            if answer == "y" or not answer:
+                p = para._element
+                p.getparent().remove(p)
+                p._p = p._element = None
+                return para
+
+    @staticmethod
+    def guess(paragraph, all_text: tuple[str], line_number: int) -> str:
+        # Only can fix can't guess
+        pass
+
+    @staticmethod
+    def perfect_match(paragraph, all_text: tuple[str], line_number: int) -> bool:
+        pass
