@@ -29,7 +29,7 @@ if ($extra) {
     }
 }
 
-$command = "python main.py --path $path --output $output --logfile $logfile"
+$command = "python main.py --path '$path' --output '$output' --logfile '$logfile'"
 if ($extraOnly) {
     $command += " --extra-only"
 }
