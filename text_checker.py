@@ -5,6 +5,7 @@ from utils import printing
 
 
 class BasicTextChecker(BasicChecker):
+    skip_notify = False
     def process(self, para, all_text: tuple[str], line_number: int) -> str | None:
         text = para.text
         if self.score(text, all_text, line_number) == 0:
@@ -19,14 +20,9 @@ class BasicTextChecker(BasicChecker):
             printing("Perfect match but not in guess", file=self.logfile)
         printing("Text:", text, file=self.logfile)
         printing("Guess:", guess, file=self.logfile)
-        text = input("Enter to continue")
-        if text.strip():
-            if text.strip().lower() == "y":
-                return guess
-            else:
-                return text
-        else:
-            return
+        if not self.skip_notify:
+            text = input("Enter to continue")
+        return guess
 
     @staticmethod
     def score(text: str, all_text: tuple[str], line_number: int) -> int:

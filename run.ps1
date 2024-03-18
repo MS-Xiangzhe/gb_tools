@@ -4,7 +4,8 @@ param (
     [string]$logfile = "logfile.txt",
     [string]$extra = "",
     [switch]$extraOnly = $false,
-    [switch]$y = $false
+    [switch]$y = $false,
+    [switch]$skipNotify = $false
 )
 $pythonVersion = & python --version 2>&1
 $pythonVersion = $pythonVersion -replace 'Python ', ''
@@ -25,6 +26,18 @@ if (!(Test-Path .venv)) {
 .\.venv\Scripts\Activate
 pip install -r requirements.txt
 
+$command = "python main.py --path '$path' --output '$output' --logfile '$logfile'"
+if ($extraOnly) {
+    $command += " --extra-only"
+}
+if ($y) {
+    $command += " -y"
+}
+
+if ($skipNotify) {
+    $command += " --skip-notify"
+}
+
 $extraArgs = ""
 if ($extra) {
     $extraArray = $extra -split ","
@@ -32,14 +45,6 @@ if ($extra) {
     foreach ($arg in $extraArray) {
         $extraArgs += " $arg"
     }
-}
-
-$command = "python main.py --path '$path' --output '$output' --logfile '$logfile'"
-if ($extraOnly) {
-    $command += " --extra-only"
-}
-if ($y) {
-    $command += " -y"
 }
 $command += $extraArgs
 

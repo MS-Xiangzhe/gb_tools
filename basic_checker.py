@@ -23,10 +23,11 @@ class BasicChecker:
     @staticmethod
     def ask_for_process(self, input_text: str, file=None) -> bool:
         file = file or self.logfile
+        printing(input_text, file=file, end="")
         if self.default_yes:
             printing("Y (default)", file=file)
             return True
-        answer = input(input_text)
+        answer = input()
         if answer == "y" or not answer:
             printing("Y", file=file)
             return True

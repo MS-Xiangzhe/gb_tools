@@ -36,11 +36,14 @@ EXTRA_CHECKER_LIST = [
 ]
 
 
-def main(path, output, logfile=None, extra=None, extra_only=False, default_yes=False):
+def main(path, output, logfile=None, extra=None, extra_only=False, default_yes=False, skip_notify=False):
     # init
     for checker in TEXT_CHECKER_LIST + DOCUMENT_CHECKER_LIST + EXTRA_CHECKER_LIST:
         checker.logfile = logfile
         checker.default_yes = default_yes
+    
+    for checker in TEXT_CHECKER_LIST:
+        checker.skip_notify = skip_notify
 
     # process
     doc = Document(path)
@@ -103,6 +106,7 @@ if __name__ == "__main__":
         "--extra-only", action="store_true", help="Run only extra checkers"
     )
     parser.add_argument("-y", action="store_true", help="Default answer is yes")
+    parser.add_argument("--skip-notify", action="store_true", help="Skip text change notification")
 
     args = parser.parse_args()
     path = expanduser(args.path)
@@ -123,6 +127,7 @@ if __name__ == "__main__":
             extra=[i - 1 for i in args.extra] if args.extra else None,
             extra_only=args.extra_only,
             default_yes=args.y,
+            skip_notify=args.skip_notify,
         )
 
     if logfile_path:
