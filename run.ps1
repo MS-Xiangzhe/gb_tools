@@ -3,7 +3,8 @@ param (
     [string]$output= "output.docx",
     [string]$logfile= "logfile.txt",
     [string[]]$extra= @(),
-    [switch]$extraOnly= $false
+    [switch]$extraOnly= $false,
+    [switch]$y= $false
 )
 
 if (!(Get-Command -Name python)) {
@@ -31,6 +32,9 @@ if ($extra) {
 $command = "python main.py --path $path --output $output --logfile $logfile"
 if ($extraOnly) {
     $command += " --extra-only"
+}
+if ($y) {
+    $command += " -y"
 }
 $command += $extraArgs
 

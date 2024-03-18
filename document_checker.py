@@ -42,9 +42,10 @@ class DocumentChecker1(BasicChecker):
             printing(
                 "Line spacing:", para.paragraph_format.line_spacing, file=self.logfile
             )
-            answer = input("Fix line spacing to 1.5? (Y/n)", file=self.logfile)
-            answer = answer.strip().lower()
-            if answer == "y" or not answer:
+            answer = self.ask_for_process(
+                self, "Fix line spacing to 1.5? (Y/n)", file=self.logfile
+            )
+            if answer:
                 para.paragraph_format.line_spacing = 1.5
                 return para
 
@@ -91,9 +92,10 @@ class DocumentChecker2(BasicChecker):
             printing("Style:", para.style.name)
             printing("Text:", para.text)
             printing("Line spacing:", para.paragraph_format.line_spacing)
-            answer = input("Fix line spacing to 1? (Y/n)")
-            answer = answer.strip().lower()
-            if answer == "y" or not answer:
+            answer = self.ask_for_process(
+                self, "Fix line spacing to 1? (Y/n)", file=self.logfile
+            )
+            if answer:
                 para.paragraph_format.line_spacing = 1
                 return para
 
@@ -137,9 +139,10 @@ class DocumentChecker3(BasicChecker):
             printing("Style (List Paragraph):", para.style.name)
             printing("Right indent (0 or None):", para.paragraph_format.right_indent)
             printing("Line spacing (1):", para.paragraph_format.line_spacing)
-            answer = input("Fix image style? (Y/n)")
-            answer = answer.strip().lower()
-            if answer == "y" or not answer:
+            answer = self.ask_for_process(
+                self, "Fix image style? (Y/n)", file=self.logfile
+            )
+            if answer:
                 para.style = "List Paragraph"
                 para.paragraph_format.right_indent = None
                 para.paragraph_format.line_spacing = 1
@@ -169,9 +172,8 @@ class DocumentChecker4(BasicChecker):
     def process(self, para, all_text: tuple[str], line_number: int) -> str | None:
         if self.score(para, all_text, line_number) > 0:
             printing("Paragraph text is empty: ", para.text)
-            answer = input("Remove it? (Y/n)")
-            answer = answer.strip().lower()
-            if answer == "y" or not answer:
+            answer = self.ask_for_process(self, "Remove it? (Y/n)", file=self.logfile)
+            if answer:
                 p = para._element
                 p.getparent().remove(p)
                 p._p = p._element = None
@@ -212,9 +214,10 @@ class DocumentChecker5(BasicChecker):
             printing("Paragraph text is:", para.text)
             for hyper in para.hyperlinks:
                 printing("Hyperlink:", hyper.text, hyper.address)
-                answer = input("Remove it? (Y/n)")
-                answer = answer.strip().lower()
-                if answer == "y" or not answer:
+                answer = self.ask_for_process(
+                    self, "Remove it? (Y/n)", file=self.logfile
+                )
+                if answer:
                     p = para._p
                     p.remove(hyper._hyperlink)
                     return para
@@ -245,7 +248,7 @@ class DocumentChecker6(BasicChecker):
         if self.score(para, all_text, line_number) > 0:
             printing("Paragraph text is:", para.text)
             for run in reversed(para.runs):
-                if re.match('^[a-zA-Z0-9\\s]*$', run.text):
+                if re.match("^[a-zA-Z0-9\\s]*$", run.text):
                     para._p.remove(run._r)
 
     @staticmethod
