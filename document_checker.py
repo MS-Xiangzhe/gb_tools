@@ -165,6 +165,8 @@ class DocumentChecker3(BasicChecker):
 class DocumentChecker4(BasicChecker):
     @staticmethod
     def score(paragraph, all_text: tuple[str], line_number: int) -> int:
+        if paragragph_contains_image(paragraph):
+            return 0
         if not paragraph.text.strip():
             return 1
         return 0
@@ -192,6 +194,8 @@ class DocumentChecker4(BasicChecker):
 class DocumentChecker5(BasicChecker):
     @staticmethod
     def score(paragraph, all_text: tuple[str], line_number: int) -> int:
+        if paragragph_contains_image(paragraph):
+            return 0
         try:
             next_line = all_text[line_number + 1]
         except IndexError:
@@ -238,6 +242,8 @@ class DocumentChecker5(BasicChecker):
 class DocumentChecker6(BasicChecker):
     @staticmethod
     def score(paragraph, all_text: tuple[str], line_number: int) -> int:
+        if paragragph_contains_image(paragraph):
+            return 0
         try:
             next_line = all_text[line_number + 1]
         except IndexError:
