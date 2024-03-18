@@ -6,13 +6,16 @@ param (
     [switch]$extraOnly= $false,
     [switch]$y= $false
 )
+$pythonVersion = & python --version 2>&1
+$pythonVersion = $pythonVersion -replace 'Python ', ''
 
-if (!(Get-Command -Name python)) {
-    Write-Host "Python not installed, installing..."
+if ($pythonVersion -notmatch "^3\.11|^3\.12|^3\.13") {
+    Write-Host "Python version does not start with 3.11, 3.12 or 3.13, installing..."
     winget.exe install python
     Write-Host "Python installed, you need restart your terminal"
     exit
 }
+
 # if not have .venv folder
 if (!(Test-Path .venv)) {
     Write-Host "Creating virtual environment..."
