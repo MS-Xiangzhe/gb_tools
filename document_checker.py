@@ -212,6 +212,7 @@ class DocumentChecker5(BasicChecker):
     def process(self, para, all_text: tuple[str], line_number: int) -> str | None:
         if self.score(para, all_text, line_number) > 0:
             printing("Paragraph text is:", para.text)
+            changed = False
             for hyper in para.hyperlinks:
                 printing("Hyperlink:", hyper.text, hyper.address)
                 answer = self.ask_for_process(
@@ -220,7 +221,9 @@ class DocumentChecker5(BasicChecker):
                 if answer:
                     p = para._p
                     p.remove(hyper._hyperlink)
-                    return para
+                    changed = True
+            if changed:
+                return para
 
     @staticmethod
     def guess(paragraph, all_text: tuple[str], line_number: int) -> str:
@@ -242,14 +245,28 @@ class DocumentChecker6(BasicChecker):
         score = 0
         if next_line.text.startswith("验证："):
             score += 1
+            if re.match("[a-zA-Z0-9\\s]*$", paragraph.text):
+                score += 1
         return score
 
     def process(self, para, all_text: tuple[str], line_number: int) -> str | None:
         if self.score(para, all_text, line_number) > 0:
             printing("Paragraph text is:", para.text)
+            changed = False
             for run in reversed(para.runs):
-                if re.match("^[a-zA-Z0-9\\s]*$", run.text):
-                    para._p.remove(run._r)
+                if re.match("[a-zA-Z0-9\\s]*$", run.text):
+                    printing("Run text is:", run.text)
+                    if self.ask_for_process(
+                        self, "Remove the end? (Y/n)", file=self.logfile
+                    ):
+                        # Remove trailing letters, numbers and whitespace from the run text
+                        run.text = re.sub('[a-zA-Z0-9\\s]*$', '', run.text)
+                        changed = True
+                else:
+                    break
+            if changed:
+                return para
+
 
     @staticmethod
     def guess(paragraph, all_text: tuple[str], line_number: int) -> str:

@@ -1,10 +1,10 @@
 param (
-    [string]$path= "",
-    [string]$output= "output.docx",
-    [string]$logfile= "logfile.txt",
-    [string[]]$extra= @(),
-    [switch]$extraOnly= $false,
-    [switch]$y= $false
+    [string]$path = "",
+    [string]$output = "output.docx",
+    [string]$logfile = "logfile.txt",
+    [string]$extra = "",
+    [switch]$extraOnly = $false,
+    [switch]$y = $false
 )
 $pythonVersion = & python --version 2>&1
 $pythonVersion = $pythonVersion -replace 'Python ', ''
@@ -27,8 +27,10 @@ pip install -r requirements.txt
 
 $extraArgs = ""
 if ($extra) {
-    foreach ($arg in $extra) {
-        $extraArgs += " --extra $arg"
+    $extraArray = $extra -split ","
+    $extraArgs += " --extra"
+    foreach ($arg in $extraArray) {
+        $extraArgs += " $arg"
     }
 }
 

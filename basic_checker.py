@@ -21,12 +21,13 @@ class BasicChecker:
         pass
 
     @staticmethod
-    def ask_for_process(self, input_text: str, **kwargs) -> bool:
+    def ask_for_process(self, input_text: str, file=None) -> bool:
+        file = file or self.logfile
         if self.default_yes:
-            printing("Y (default)", file=self.logfile)
+            printing("Y (default)", file=file)
             return True
-        answer = input(input_text, **kwargs)
+        answer = input(input_text)
         if answer == "y" or not answer:
-            printing("Y", file=self.logfile)
+            printing("Y", file=file)
             return True
         return False

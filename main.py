@@ -115,7 +115,7 @@ if __name__ == "__main__":
     printing("Extra checkers:", args.extra)
     printing("Extra only:", args.extra_only)
 
-    with open(logfile_path, "a+", encoding="utf-8") as logfile:
+    with open(logfile_path, "w+", encoding="utf-8") as logfile:
         main(
             path,
             output,
