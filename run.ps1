@@ -1,7 +1,9 @@
 param (
     [string]$path= "",
     [string]$output= "output.docx",
-    [string]$logfile= "logfile.txt"
+    [string]$logfile= "logfile.txt",
+    [string[]]$extra= @(),
+    [switch]$extraOnly= $false
 )
 
 if (!(Get-Command -Name python)) {
@@ -19,6 +21,20 @@ if (!(Test-Path .venv)) {
 .\.venv\Scripts\Activate
 pip install -r requirements.txt
 
-python main.py --path $path --output $output --logfile $logfile
+$extraArgs = ""
+if ($extra) {
+    foreach ($arg in $extra) {
+        $extraArgs += " --extra $arg"
+    }
+}
+
+$command = "python main.py --path $path --output $output --logfile $logfile"
+if ($extraOnly) {
+    $command += " --extra-only"
+}
+$command += $extraArgs
+
+Write-Host $command
+Invoke-Expression $command
 
 deactivate

@@ -10,6 +10,7 @@ from document_checker import (
     DocumentChecker2,
     DocumentChecker3,
     DocumentChecker4,
+    DocumentChecker5,
 )
 
 
@@ -28,8 +29,12 @@ DOCUMENT_CHECKER_LIST = [
     DocumentChecker4,
 ]
 
+EXTRA_CHECKER_LIST = [
+    DocumentChecker5,
+]
 
-def main(path, output, logfile=None):
+
+def main(path, output, logfile=None, extra=None, extra_only=False):
     # init
     for checker in TEXT_CHECKER_LIST:
         checker.logfile = logfile
@@ -44,7 +49,15 @@ def main(path, output, logfile=None):
     for line_number, paragraph in enumerate(all_text):
         printing(line_number, paragraph.text, file=logfile)
         paragraph = all_text[line_number]
+        for i in range(len(EXTRA_CHECKER_LIST)):
+            if extra and i in extra:
+                checker = EXTRA_CHECKER_LIST[i]
+                para = checker.process(checker, paragraph, all_text, line_number)
+                if para:
+                    changed = True
         for checker in DOCUMENT_CHECKER_LIST:
+            if extra_only:
+                continue
             para = checker.process(checker, paragraph, all_text, line_number)
             if para:
                 changed = True
@@ -59,6 +72,8 @@ def main(path, output, logfile=None):
         printing(line_number, paragraph.text, file=logfile)
         paragraph = all_text[line_number]
         for checker in TEXT_CHECKER_LIST:
+            if extra_only:
+                continue
             txt = checker.process(checker, paragraph, all_text, line_number)
             # if txt:
             #    inline = paragraph.runs
@@ -80,6 +95,12 @@ if __name__ == "__main__":
         "--output", default="output.docx", help="Path to the output file"
     )
     parser.add_argument("--logfile", default="logfile.txt", help="Path to the log file")
+    parser.add_argument(
+        "--extra", nargs="+", type=int, default=None, help="Select extra checkers"
+    )
+    parser.add_argument(
+        "--extra-only", action="store_true", help="Run only extra checkers"
+    )
 
     args = parser.parse_args()
     path = expanduser(args.path)
@@ -89,9 +110,17 @@ if __name__ == "__main__":
     printing("Path:", path)
     printing("Output:", output)
     printing("Logfile:", logfile_path)
+    printing("Extra checkers:", args.extra)
+    printing("Extra only:", args.extra_only)
 
     with open(logfile_path, "a+", encoding="utf-8") as logfile:
-        main(path, output, logfile)
+        main(
+            path,
+            output,
+            logfile,
+            extra=[i - 1 for i in args.extra] if args.extra else None,
+            extra_only=args.extra_only,
+        )
 
     if logfile_path:
         printing(f"Log file: {logfile_path}")

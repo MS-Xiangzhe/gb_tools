@@ -1,6 +1,7 @@
 from docx.text.paragraph import Paragraph
 from basic_checker import BasicChecker
 
+import os.path
 from utils import printing
 
 
@@ -37,7 +38,9 @@ class DocumentChecker1(BasicChecker):
         ):
             printing("Style:", para.style.name, file=self.logfile)
             printing("Text:", para.text, file=self.logfile)
-            printing("Line spacing:", para.paragraph_format.line_spacing, file=self.logfile)
+            printing(
+                "Line spacing:", para.paragraph_format.line_spacing, file=self.logfile
+            )
             answer = input("Fix line spacing to 1.5? (Y/n)", file=self.logfile)
             answer = answer.strip().lower()
             if answer == "y" or not answer:
@@ -172,6 +175,48 @@ class DocumentChecker4(BasicChecker):
                 p.getparent().remove(p)
                 p._p = p._element = None
                 return para
+
+    @staticmethod
+    def guess(paragraph, all_text: tuple[str], line_number: int) -> str:
+        # Only can fix can't guess
+        pass
+
+    @staticmethod
+    def perfect_match(paragraph, all_text: tuple[str], line_number: int) -> bool:
+        pass
+
+
+class DocumentChecker5(BasicChecker):
+    @staticmethod
+    def score(paragraph, all_text: tuple[str], line_number: int) -> int:
+        try:
+            next_line = all_text[line_number + 1]
+        except IndexError:
+            return 0
+        score = 0
+        if next_line.text.startswith("验证："):
+            score += 1
+            if paragraph.hyperlinks:
+                last_hyper = paragraph.hyperlinks[-1]
+                hyper_text = last_hyper.text
+                para_text = paragraph.text.strip()
+                if para_text.endswith(hyper_text):
+                    score += 1
+                    if last_hyper.address.endswith(hyper_text):
+                        score += 1
+        return score
+
+    def process(self, para, all_text: tuple[str], line_number: int) -> str | None:
+        if self.score(para, all_text, line_number) > 0:
+            printing("Paragraph text is:", para.text)
+            for hyper in para.hyperlinks:
+                printing("Hyperlink:", hyper.text, hyper.address)
+                answer = input("Remove it? (Y/n)")
+                answer = answer.strip().lower()
+                if answer == "y" or not answer:
+                    p = para._p
+                    p.remove(hyper._hyperlink)
+                    return para
 
     @staticmethod
     def guess(paragraph, all_text: tuple[str], line_number: int) -> str:
