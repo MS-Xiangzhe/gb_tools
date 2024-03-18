@@ -1,8 +1,9 @@
 from docx.text.paragraph import Paragraph
 from basic_checker import BasicChecker
 
-import os.path
 from utils import printing
+
+import re
 
 
 def paragragph_contains_image(paragraph: Paragraph) -> bool:
@@ -217,6 +218,35 @@ class DocumentChecker5(BasicChecker):
                     p = para._p
                     p.remove(hyper._hyperlink)
                     return para
+
+    @staticmethod
+    def guess(paragraph, all_text: tuple[str], line_number: int) -> str:
+        # Only can fix can't guess
+        pass
+
+    @staticmethod
+    def perfect_match(paragraph, all_text: tuple[str], line_number: int) -> bool:
+        pass
+
+
+class DocumentChecker6(BasicChecker):
+    @staticmethod
+    def score(paragraph, all_text: tuple[str], line_number: int) -> int:
+        try:
+            next_line = all_text[line_number + 1]
+        except IndexError:
+            return 0
+        score = 0
+        if next_line.text.startswith("验证："):
+            score += 1
+        return score
+
+    def process(self, para, all_text: tuple[str], line_number: int) -> str | None:
+        if self.score(para, all_text, line_number) > 0:
+            printing("Paragraph text is:", para.text)
+            for run in reversed(para.runs):
+                if re.match('^[a-zA-Z0-9\\s]*$', run.text):
+                    para._p.remove(run._r)
 
     @staticmethod
     def guess(paragraph, all_text: tuple[str], line_number: int) -> str:
