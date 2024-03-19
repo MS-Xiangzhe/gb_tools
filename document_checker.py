@@ -1,4 +1,5 @@
 from docx.text.paragraph import Paragraph
+from docx.text.run import Run
 from basic_checker import BasicChecker
 
 from utils import printing
@@ -10,6 +11,14 @@ def paragragph_contains_image(paragraph: Paragraph) -> bool:
     return bool(
         paragraph._p.xpath(
             "./w:r/w:drawing/*[self::wp:inline | self::wp:anchor]/a:graphic/a:graphicData/pic:pic"
+        )
+    )
+
+
+def run_contains_image(run: Run) -> bool:
+    return bool(
+        run._r.xpath(
+            "./w:drawing/*[self::wp:inline | self::wp:anchor]/a:graphic/a:graphicData/pic:pic"
         )
     )
 
@@ -266,13 +275,50 @@ class DocumentChecker6(BasicChecker):
                         self, "Remove the end? (Y/n)", file=self.logfile
                     ):
                         # Remove trailing letters, numbers and whitespace from the run text
-                        run.text = re.sub('[a-zA-Z0-9\\s]*$', '', run.text)
+                        run.text = re.sub("[a-zA-Z0-9\\s]*$", "", run.text)
                         changed = True
                 else:
                     break
             if changed:
                 return para
 
+    @staticmethod
+    def guess(paragraph, all_text: tuple[str], line_number: int) -> str:
+        # Only can fix can't guess
+        pass
+
+    @staticmethod
+    def perfect_match(paragraph, all_text: tuple[str], line_number: int) -> bool:
+        pass
+
+
+class DocumentChecker7(BasicChecker):
+    @staticmethod
+    def score(paragraph, all_text: tuple[str], line_number: int) -> int:
+        if paragragph_contains_image(paragraph) and run_contains_image(
+            paragraph.runs[-1]
+        ):
+            return 1
+        return 0
+
+    def process(self, para, all_text: tuple[str], line_number: int) -> str | None:
+        if self.score(para, all_text, line_number) > 0:
+            printing("Paragraph contains image in the end, text is:", para.text)
+            if not self.ask_for_process(
+                self, "Move the image to new paragraph? (Y/n)", file=self.logfile
+            ):
+                return
+            try:
+                next_para = all_text[line_number + 1]
+                new_para = next_para.insert_paragraph_before(style=para.style)
+            except IndexError:
+                new_para = para._parent.add_paragraph(para.style)
+            run = para.runs[-1]
+            new_para._p.append(run._r)
+            for run in reversed(para.runs):
+                if not run.text.strip():
+                    para._p.remove(run._r)
+            return para
 
     @staticmethod
     def guess(paragraph, all_text: tuple[str], line_number: int) -> str:
