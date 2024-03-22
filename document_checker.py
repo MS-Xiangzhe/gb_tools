@@ -312,7 +312,7 @@ class DocumentChecker7(BasicChecker):
                 next_para = all_text[line_number + 1]
                 new_para = next_para.insert_paragraph_before(style=para.style)
             except IndexError:
-                new_para = para._parent.add_paragraph(para.style)
+                new_para = para._parent.add_paragraph(style=para.style)
             run = para.runs[-1]
             new_para._p.append(run._r)
             for run in reversed(para.runs):
