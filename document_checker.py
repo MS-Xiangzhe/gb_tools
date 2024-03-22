@@ -99,9 +99,11 @@ class DocumentChecker2(BasicChecker):
         if self.score(para, all_text, line_number) > 0 and not self.perfect_match(
             para, all_text, line_number
         ):
-            printing("Style:", para.style.name)
-            printing("Text:", para.text)
-            printing("Line spacing:", para.paragraph_format.line_spacing)
+            printing("Style:", para.style.name, file=self.logfile)
+            printing("Text:", para.text, file=self.logfile)
+            printing(
+                "Line spacing:", para.paragraph_format.line_spacing, file=self.logfile
+            )
             answer = self.ask_for_process(
                 self, "Fix line spacing to 1? (Y/n)", file=self.logfile
             )
@@ -146,9 +148,17 @@ class DocumentChecker3(BasicChecker):
         if self.score(para, all_text, line_number) > 0 and not self.perfect_match(
             para, all_text, line_number
         ):
-            printing("Style (List Paragraph):", para.style.name)
-            printing("Right indent (0 or None):", para.paragraph_format.right_indent)
-            printing("Line spacing (1):", para.paragraph_format.line_spacing)
+            printing("Style (List Paragraph):", para.style.name, file=self.logfile)
+            printing(
+                "Right indent (0 or None):",
+                para.paragraph_format.right_indent,
+                file=self.logfile,
+            )
+            printing(
+                "Line spacing (1):",
+                para.paragraph_format.line_spacing,
+                file=self.logfile,
+            )
             answer = self.ask_for_process(
                 self, "Fix image style? (Y/n)", file=self.logfile
             )
@@ -184,18 +194,19 @@ class DocumentChecker4(BasicChecker):
 
     def process(self, para, all_text: tuple[str], line_number: int) -> str | None:
         if self.score(para, all_text, line_number) > 0:
-            printing("Paragraph text is empty: ", para.text)
-            answer = self.ask_for_process(self, "Remove it? (Y/n)", file=self.logfile)
-            if answer:
-                p = para._element
-                p.getparent().remove(p)
-                p._p = p._element = None
-                return para
+            if not para.text.strip():
+                printing("Paragraph text is empty: ", para.text, file=self.logfile)
+                answer = self.ask_for_process(self, "Remove it? (Y/n)", file=self.logfile)
+                if answer:
+                    p = para._element
+                    p.getparent().remove(p)
+                    p._p = p._element = None
+                    return para
             changed = False
             runs = copy(para.runs)
             for run in runs:
                 if not run.text.strip():
-                    printing("Run text is empty: ", run.text)
+                    printing("Run text is empty: ", run.text, file=self.logfile)
                     answer = self.ask_for_process(
                         self, "Remove it? (Y/n)", file=self.logfile
                     )
@@ -239,10 +250,10 @@ class DocumentChecker5(BasicChecker):
 
     def process(self, para, all_text: tuple[str], line_number: int) -> str | None:
         if self.score(para, all_text, line_number) > 0:
-            printing("Paragraph text is:", para.text)
+            printing("Paragraph text is:", para.text, file=self.logfile)
             changed = False
             for hyper in para.hyperlinks:
-                printing("Hyperlink:", hyper.text, hyper.address)
+                printing("Hyperlink:", hyper.text, hyper.address, file=self.logfile)
                 answer = self.ask_for_process(
                     self, "Remove it? (Y/n)", file=self.logfile
                 )
@@ -281,11 +292,11 @@ class DocumentChecker6(BasicChecker):
 
     def process(self, para, all_text: tuple[str], line_number: int) -> str | None:
         if self.score(para, all_text, line_number) > 0:
-            printing("Paragraph text is:", para.text)
+            printing("Paragraph text is:", para.text, file=self.logfile)
             changed = False
             for run in reversed(para.runs):
                 if re.match("[a-zA-Z0-9\\s]*$", run.text):
-                    printing("Run text is:", run.text)
+                    printing("Run text is:", run.text, file=self.logfile)
                     if self.ask_for_process(
                         self, "Remove the end? (Y/n)", file=self.logfile
                     ):
@@ -318,15 +329,25 @@ class DocumentChecker7(BasicChecker):
 
     def process(self, para, all_text: tuple[str], line_number: int) -> str | None:
         if self.score(para, all_text, line_number) > 0:
-            printing("Paragraph contains image in the end, text is:", para.text)
+            printing(
+                "Paragraph contains image in the end, text is:",
+                para.text,
+                file=self.logfile,
+            )
             if not self.ask_for_process(
                 self, "Move the image to new paragraph? (Y/n)", file=self.logfile
             ):
                 return
             try:
+                printing(
+                    "Next paragraph text is:",
+                    all_text[line_number + 1].text,
+                    file=self.logfile,
+                )
                 next_para = all_text[line_number + 1]
                 new_para = next_para.insert_paragraph_before(style=para.style)
             except IndexError:
+                printing("No next paragraph", file=self.logfile)
                 new_para = para._parent.add_paragraph(style=para.style)
             run = para.runs[-1]
             new_para._p.append(run._r)

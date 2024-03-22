@@ -29,7 +29,6 @@ DOCUMENT_CHECKER_LIST = [
     DocumentChecker2,
     DocumentChecker3,
     DocumentChecker4,
-    DocumentChecker7,
 ]
 
 EXTRA_CHECKER_LIST = [
