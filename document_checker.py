@@ -5,6 +5,7 @@ from basic_checker import BasicChecker
 from utils import printing
 
 import re
+from copy import copy
 
 
 def paragragph_contains_image(paragraph: Paragraph) -> bool:
@@ -176,8 +177,9 @@ class DocumentChecker4(BasicChecker):
     def score(paragraph, all_text: tuple[str], line_number: int) -> int:
         if paragragph_contains_image(paragraph):
             return 0
-        if not paragraph.text.strip():
-            return 1
+        for run in paragraph.runs:
+            if not run.text.strip():
+                return 1
         return 0
 
     def process(self, para, all_text: tuple[str], line_number: int) -> str | None:
@@ -188,6 +190,19 @@ class DocumentChecker4(BasicChecker):
                 p = para._element
                 p.getparent().remove(p)
                 p._p = p._element = None
+                return para
+            changed = False
+            runs = copy(para.runs)
+            for run in runs:
+                if not run.text.strip():
+                    printing("Run text is empty: ", run.text)
+                    answer = self.ask_for_process(
+                        self, "Remove it? (Y/n)", file=self.logfile
+                    )
+                    if answer:
+                        para._p.remove(run._r)
+                        changed = True
+            if changed:
                 return para
 
     @staticmethod
@@ -315,7 +330,8 @@ class DocumentChecker7(BasicChecker):
                 new_para = para._parent.add_paragraph(style=para.style)
             run = para.runs[-1]
             new_para._p.append(run._r)
-            for run in reversed(para.runs):
+            runs = copy(para.runs)
+            for run in runs:
                 if not run.text.strip():
                     para._p.remove(run._r)
             return para
