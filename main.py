@@ -34,6 +34,7 @@ DOCUMENT_CHECKER_LIST = [
 EXTRA_CHECKER_LIST = [
     DocumentChecker5,
     DocumentChecker6,
+    DocumentChecker7,
 ]
 
 
@@ -42,7 +43,7 @@ def main(path, output, logfile=None, extra=None, extra_only=False, default_yes=F
     for checker in TEXT_CHECKER_LIST + DOCUMENT_CHECKER_LIST + EXTRA_CHECKER_LIST:
         checker.logfile = logfile
         checker.default_yes = default_yes
-    
+
     for checker in TEXT_CHECKER_LIST:
         checker.skip_notify = skip_notify
 
