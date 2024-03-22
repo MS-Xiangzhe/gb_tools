@@ -37,6 +37,20 @@ for raw in worksheet.iter_rows():
         data_map.append(data)
 
 data_map = [[re.sub(r"\(.*\)", "", i) for i in data] for data in data_map if data]
+separators = [":", "-", "："]
+
+processed_data_map = []
+for data in data_map:
+    if data:
+        first_item = data[0]
+        second_item = data[1]
+        for sep in separators:
+            if sep in second_item:
+                second_item = sep.join(second_item.rsplit(sep, maxsplit=1)[:-1])
+                break
+        processed_data_map.append([first_item, second_item])
+data_map = processed_data_map
+
 r_data_map = []
 for data in data_map:
     if data not in r_data_map:
