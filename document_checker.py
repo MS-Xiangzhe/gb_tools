@@ -202,19 +202,6 @@ class DocumentChecker4(BasicChecker):
                     p.getparent().remove(p)
                     p._p = p._element = None
                     return para
-            changed = False
-            runs = copy(para.runs)
-            for run in runs:
-                if not run.text.strip():
-                    printing("Run text is empty: ", run.text, file=self.logfile)
-                    answer = self.ask_for_process(
-                        self, "Remove it? (Y/n)", file=self.logfile
-                    )
-                    if answer:
-                        para._p.remove(run._r)
-                        changed = True
-            if changed:
-                return para
 
     @staticmethod
     def guess(paragraph, all_text: tuple[str], line_number: int) -> str:
