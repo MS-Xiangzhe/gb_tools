@@ -187,9 +187,8 @@ class DocumentChecker4(BasicChecker):
     def score(paragraph, all_text: tuple[str], line_number: int) -> int:
         if paragragph_contains_image(paragraph):
             return 0
-        for run in paragraph.runs:
-            if not run.text.strip():
-                return 1
+        if not paragraph.text.strip():
+            return 1
         return 0
 
     def process(self, para, all_text: tuple[str], line_number: int) -> str | None:
