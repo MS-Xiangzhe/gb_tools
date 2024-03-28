@@ -222,7 +222,6 @@ class DocumentChecker5(BasicChecker):
             return 0
         score = 0
         if next_line.text.startswith("验证："):
-            score += 1
             if paragraph.hyperlinks:
                 last_hyper = paragraph.hyperlinks[-1]
                 hyper_text = last_hyper.text
@@ -379,6 +378,45 @@ class DocumentChecker8(BasicChecker):
             para_format.space_before = Pt(0)
             para_format.space_after = Pt(0)
             return para
+
+    @staticmethod
+    def guess(paragraph, all_text: tuple[str], line_number: int) -> str:
+        # Only can fix can't guess
+        pass
+
+    @staticmethod
+    def perfect_match(paragraph, all_text: tuple[str], line_number: int) -> bool:
+        pass
+
+
+class DocumentChecker9(BasicChecker):
+    @staticmethod
+    def score(paragraph, all_text: tuple[str], line_number: int) -> int:
+        if paragragph_contains_image(paragraph):
+            return 0
+        try:
+            next_line = all_text[line_number + 1]
+        except IndexError:
+            return 0
+        score = 0
+        if next_line.text.startswith("验证："):
+            if "test" in paragraph.text.lower():
+                score += 1
+        return score
+
+    def process(self, para, all_text: tuple[str], line_number: int) -> str | None:
+        if self.score(para, all_text, line_number) > 0:
+            printing("Paragraph text is:", para.text, file=self.logfile)
+            changed_text = re.split('test|Test|TEST', para.text)[0]
+            printing("Changed text is:", changed_text, file=self.logfile)
+            answer = self.ask_for_process("Remove 'test' from text? (Y/n)", file=self.logfile)
+            if answer:
+                for run in list(reversed(para.runs))[:-1]:
+                    para._p.remove(run._r)
+                run = para.runs[0].clear()
+                run.add_text(changed_text)
+                para.runs[0] = run
+                return para
 
     @staticmethod
     def guess(paragraph, all_text: tuple[str], line_number: int) -> str:
