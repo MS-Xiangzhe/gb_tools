@@ -13,6 +13,7 @@ from document_checker import (
     DocumentChecker5,
     DocumentChecker6,
     DocumentChecker7,
+    DocumentChecker8,
 )
 
 
@@ -23,22 +24,32 @@ def get_all_text(doc: Document) -> tuple[str]:
     return all_text
 
 
-TEXT_CHECKER_LIST = [TextChecker1, TextChecker2]
+TEXT_CHECKER_LIST = [TextChecker1(), TextChecker2()]
 DOCUMENT_CHECKER_LIST = [
-    DocumentChecker1,
-    DocumentChecker2,
-    DocumentChecker3,
-    DocumentChecker4,
+    DocumentChecker1(),
+    DocumentChecker2(),
+    DocumentChecker3(),
+    DocumentChecker4(),
+    DocumentChecker7(),
+    DocumentChecker8(),
 ]
 
 EXTRA_CHECKER_LIST = [
-    DocumentChecker5,
-    DocumentChecker6,
-    DocumentChecker7,
+    DocumentChecker5(),
+    DocumentChecker6(),
 ]
 
 
-def main(path, output, logfile=None, extra=None, extra_only=False, default_yes=False, skip_notify=False):
+def main(
+    path,
+    output,
+    logfile=None,
+    extra=None,
+    extra_only=False,
+    default_yes=False,
+    skip_notify=False,
+    ask_guess_replace=False,
+):
     # init
     for checker in TEXT_CHECKER_LIST + DOCUMENT_CHECKER_LIST + EXTRA_CHECKER_LIST:
         checker.logfile = logfile
@@ -46,6 +57,7 @@ def main(path, output, logfile=None, extra=None, extra_only=False, default_yes=F
 
     for checker in TEXT_CHECKER_LIST:
         checker.skip_notify = skip_notify
+        checker.ask_guess_is_right = ask_guess_replace
 
     # process
     doc = Document(path)
@@ -58,13 +70,13 @@ def main(path, output, logfile=None, extra=None, extra_only=False, default_yes=F
         for i in range(len(EXTRA_CHECKER_LIST)):
             if extra and i in extra:
                 checker = EXTRA_CHECKER_LIST[i]
-                para = checker.process(checker, paragraph, all_text, line_number)
+                para = checker.process(paragraph, all_text, line_number)
                 if para:
                     changed = True
         for checker in DOCUMENT_CHECKER_LIST:
             if extra_only:
                 continue
-            para = checker.process(checker, paragraph, all_text, line_number)
+            para = checker.process(paragraph, all_text, line_number)
             if para:
                 changed = True
     if changed:
@@ -80,7 +92,14 @@ def main(path, output, logfile=None, extra=None, extra_only=False, default_yes=F
         for checker in TEXT_CHECKER_LIST:
             if extra_only:
                 continue
-            txt = checker.process(checker, paragraph, all_text, line_number)
+            txt = checker.process(paragraph, all_text, line_number)
+            if txt:
+                changed = True
+    if changed:
+        answer = input(f"Save document? (To {output}) (Y/n)")
+        answer = answer.strip().lower()
+        if answer == "y" or not answer:
+            doc.save(output)
             # if txt:
             #    inline = paragraph.runs
             #    for i in range(len(inline)):
@@ -108,7 +127,14 @@ if __name__ == "__main__":
         "--extra-only", action="store_true", help="Run only extra checkers"
     )
     parser.add_argument("-y", action="store_true", help="Default answer is yes")
-    parser.add_argument("--skip-notify", action="store_true", help="Skip text change notification")
+    parser.add_argument(
+        "--skip-notify", action="store_true", help="Skip text change notification"
+    )
+    parser.add_argument(
+        "--ask-guess-replace",
+        action="store_true",
+        help="If guess is not match, ask user to type the correct text (Or answer yes/no)",
+    )
 
     args = parser.parse_args()
     path = expanduser(args.path)
@@ -130,6 +156,7 @@ if __name__ == "__main__":
             extra_only=args.extra_only,
             default_yes=args.y,
             skip_notify=args.skip_notify,
+            ask_guess_replace=args.ask_guess_replace,
         )
 
     if logfile_path:

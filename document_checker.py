@@ -1,5 +1,6 @@
 from docx.text.paragraph import Paragraph
 from docx.text.run import Run
+from docx.shared import Pt
 from basic_checker import BasicChecker
 
 from utils import printing
@@ -53,7 +54,7 @@ class DocumentChecker1(BasicChecker):
                 "Line spacing:", para.paragraph_format.line_spacing, file=self.logfile
             )
             answer = self.ask_for_process(
-                self, "Fix line spacing to 1.5? (Y/n)", file=self.logfile
+                "Fix line spacing to 1.5? (Y/n)", file=self.logfile
             )
             if answer:
                 para.paragraph_format.line_spacing = 1.5
@@ -105,7 +106,7 @@ class DocumentChecker2(BasicChecker):
                 "Line spacing:", para.paragraph_format.line_spacing, file=self.logfile
             )
             answer = self.ask_for_process(
-                self, "Fix line spacing to 1? (Y/n)", file=self.logfile
+                input_text="Fix line spacing to 1? (Y/n)", file=self.logfile
             )
             if answer:
                 para.paragraph_format.line_spacing = 1
@@ -159,9 +160,7 @@ class DocumentChecker3(BasicChecker):
                 para.paragraph_format.line_spacing,
                 file=self.logfile,
             )
-            answer = self.ask_for_process(
-                self, "Fix image style? (Y/n)", file=self.logfile
-            )
+            answer = self.ask_for_process("Fix image style? (Y/n)", file=self.logfile)
             if answer:
                 para.style = "List Paragraph"
                 para.paragraph_format.right_indent = None
@@ -195,7 +194,7 @@ class DocumentChecker4(BasicChecker):
         if self.score(para, all_text, line_number) > 0:
             if not para.text.strip():
                 printing("Paragraph text is empty: ", para.text, file=self.logfile)
-                answer = self.ask_for_process(self, "Remove it? (Y/n)", file=self.logfile)
+                answer = self.ask_for_process("Remove it? (Y/n)", file=self.logfile)
                 if answer:
                     p = para._element
                     p.getparent().remove(p)
@@ -240,9 +239,7 @@ class DocumentChecker5(BasicChecker):
             changed = False
             for hyper in para.hyperlinks:
                 printing("Hyperlink:", hyper.text, hyper.address, file=self.logfile)
-                answer = self.ask_for_process(
-                    self, "Remove it? (Y/n)", file=self.logfile
-                )
+                answer = self.ask_for_process("Remove it? (Y/n)", file=self.logfile)
                 if answer:
                     p = para._p
                     p.remove(hyper._hyperlink)
@@ -283,9 +280,7 @@ class DocumentChecker6(BasicChecker):
             for run in reversed(para.runs):
                 if re.match("[a-zA-Z0-9\\s]*$", run.text):
                     printing("Run text is:", run.text, file=self.logfile)
-                    if self.ask_for_process(
-                        self, "Remove the end? (Y/n)", file=self.logfile
-                    ):
+                    if self.ask_for_process("Remove the end? (Y/n)", file=self.logfile):
                         # Remove trailing letters, numbers and whitespace from the run text
                         run.text = re.sub("[a-zA-Z0-9\\s]*$", "", run.text)
                         changed = True
@@ -321,7 +316,7 @@ class DocumentChecker7(BasicChecker):
                 file=self.logfile,
             )
             if not self.ask_for_process(
-                self, "Move the image to new paragraph? (Y/n)", file=self.logfile
+                "Move the image to new paragraph? (Y/n)", file=self.logfile
             ):
                 return
             try:
@@ -341,6 +336,47 @@ class DocumentChecker7(BasicChecker):
             for run in runs:
                 if not run.text.strip():
                     para._p.remove(run._r)
+            return para
+
+    @staticmethod
+    def guess(paragraph, all_text: tuple[str], line_number: int) -> str:
+        # Only can fix can't guess
+        pass
+
+    @staticmethod
+    def perfect_match(paragraph, all_text: tuple[str], line_number: int) -> bool:
+        pass
+
+
+class DocumentChecker8(BasicChecker):
+    @staticmethod
+    def score(paragraph, all_text: tuple[str], line_number: int) -> int:
+        score = 0
+        paragraph_format = paragraph.paragraph_format
+        if paragraph_format.space_after:
+            score += 1
+        if paragraph_format.space_before:
+            score += 1
+        return 0
+
+    def process(self, para, all_text: tuple[str], line_number: int) -> str | None:
+        if self.score(para, all_text, line_number) > 0:
+            para_format = para.paragraph_format
+            printing(
+                "Paragraph space before and after is not 0",
+                "before:",
+                para_format.space_before,
+                "after:",
+                para_format.space_after,
+                file=self.logfile,
+            )
+            if not self.ask_for_process(
+                "Remove space before and after? (Y/n)", file=self.logfile
+            ):
+                return
+            para_format.space_before = Pt(0)
+            para_format.space_after = Pt(0)
+            para.paragraph_format = para_format
             return para
 
     @staticmethod

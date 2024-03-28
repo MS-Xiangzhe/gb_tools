@@ -20,7 +20,6 @@ class BasicChecker:
     def perfect_match(obj, all_text: tuple[str], line_number: int) -> bool:
         pass
 
-    @staticmethod
     def ask_for_process(self, input_text: str, file=None) -> bool:
         file = file or self.logfile
         printing(input_text, file=file, end="")
@@ -32,3 +31,10 @@ class BasicChecker:
             printing("Y", file=file)
             return True
         return False
+
+    def ask_for_answer(self, input_text: str, file=None) -> str:
+        file = file or self.logfile
+        printing(input_text, file=file, end="")
+        answer = input()
+        printing(answer, file=file)
+        return answer

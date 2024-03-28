@@ -1,11 +1,13 @@
 import re
 from basic_checker import BasicChecker
 
-from utils import printing
+from utils import check_is_bool, printing
 
 
 class BasicTextChecker(BasicChecker):
     skip_notify = False
+    ask_guess_is_right = False
+
     def process(self, para, all_text: tuple[str], line_number: int) -> str | None:
         text = para.text
         if self.score(text, all_text, line_number) == 0:
@@ -20,20 +22,36 @@ class BasicTextChecker(BasicChecker):
             printing("Perfect match but not in guess", file=self.logfile)
         printing("Text:", text, file=self.logfile)
         printing("Guess:", guess, file=self.logfile)
-        if not self.skip_notify:
-            text = input("Enter to continue")
+        fix_it = False
+        if self.ask_guess_is_right:
+            answer = self.ask_for_answer(
+                "Is the guess right? (Or you type) ", file=self.logfile
+            )
+            b = check_is_bool(answer)
+            if b is True:
+                fix_it = True
+            elif b is False:
+                fix_it = False
+            elif b is None:
+                guess = answer
+        if fix_it or self.ask_for_process(
+            "Do you want to replace it by guess? (Y/n) ", file=self.logfile
+        ):
+            for run in list(reversed(para.runs))[1:]:
+                para._p.remove(run._r)
+            run = para.runs[0].clear()
+            run.add_text(guess)
+            para.runs[0] = run
         return guess
 
     @staticmethod
     def score(text: str, all_text: tuple[str], line_number: int) -> int:
         pass
 
-    @staticmethod
-    def guess(text: str, all_text: tuple[str], line_number: int) -> str:
+    def guess(self, text: str, all_text: tuple[str], line_number: int) -> str:
         pass
 
-    @staticmethod
-    def perfect_match(text: str, all_text: tuple[str], line_number: int) -> bool:
+    def perfect_match(self, text: str, all_text: tuple[str], line_number: int) -> bool:
         pass
 
 
@@ -86,11 +104,11 @@ class TextChecker1(BasicTextChecker):
                     score += 1
         return score
 
-    def guess(text: str, all_text: tuple[str], line_number: int) -> str:
+    def guess(self, text: str, all_text: tuple[str], line_number: int) -> str:
         title_keywords = TextChecker1.__step1_get_title_keywords(all_text, line_number)
         return f"验证：在“{title_keywords[-1]}”功能中能够正确处理显示GB18030-2022中定义的字符"
 
-    def perfect_match(text: str, all_text: tuple[str], line_number: int) -> bool:
+    def perfect_match(self, text: str, all_text: tuple[str], line_number: int) -> bool:
         return (
             re.findall(
                 r"验证：在“.*”功能中能够正确处理显示GB18030-2022中定义的字符", text
