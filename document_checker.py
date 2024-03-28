@@ -302,8 +302,10 @@ class DocumentChecker6(BasicChecker):
 class DocumentChecker7(BasicChecker):
     @staticmethod
     def score(paragraph, all_text: tuple[str], line_number: int) -> int:
-        if paragragph_contains_image(paragraph) and run_contains_image(
-            paragraph.runs[-1]
+        if (
+            paragragph_contains_image(paragraph)
+            and len(paragraph.runs) > 1
+            and run_contains_image(paragraph.runs[-1])
         ):
             return 1
         return 0
@@ -353,17 +355,17 @@ class DocumentChecker8(BasicChecker):
     def score(paragraph, all_text: tuple[str], line_number: int) -> int:
         score = 0
         paragraph_format = paragraph.paragraph_format
-        if paragraph_format.space_after:
+        if paragraph_format.space_after != Pt(0):
             score += 1
-        if paragraph_format.space_before:
+        if paragraph_format.space_before != Pt(0):
             score += 1
-        return 0
+        return score
 
     def process(self, para, all_text: tuple[str], line_number: int) -> str | None:
         if self.score(para, all_text, line_number) > 0:
             para_format = para.paragraph_format
             printing(
-                "Paragraph space before and after is not 0",
+                "Paragraph space before or after is not 0",
                 "before:",
                 para_format.space_before,
                 "after:",
@@ -376,7 +378,6 @@ class DocumentChecker8(BasicChecker):
                 return
             para_format.space_before = Pt(0)
             para_format.space_after = Pt(0)
-            para.paragraph_format = para_format
             return para
 
     @staticmethod
