@@ -5,7 +5,7 @@ from utils import check_is_bool, printing
 
 
 class BasicTextChecker(BasicChecker):
-    skip_notify = False
+    skip_change = False
     ask_guess_is_right = False
 
     def process(self, para, all_text: tuple[str], line_number: int) -> str | None:
@@ -22,6 +22,9 @@ class BasicTextChecker(BasicChecker):
             printing("Perfect match but not in guess", file=self.logfile)
         printing("Text:", text, file=self.logfile)
         printing("Guess:", guess, file=self.logfile)
+        if self.skip_change:
+            printing("Skip change", file=self.logfile)
+            return
         fix_it = False
         if self.ask_guess_is_right:
             answer = self.ask_for_answer(
@@ -32,8 +35,13 @@ class BasicTextChecker(BasicChecker):
                 fix_it = True
             elif b is False:
                 fix_it = False
-            elif b is None:
-                guess = answer
+            elif b is None and answer:
+                fix_it = True
+                patch_answer = self.patch_answer(text, all_text, line_number, answer)
+                if patch_answer:
+                    guess = patch_answer
+                else:
+                    guess = answer
         if fix_it or self.ask_for_process(
             "Do you want to replace it by guess? (Y/n) ", file=self.logfile
         ):
@@ -52,6 +60,11 @@ class BasicTextChecker(BasicChecker):
         pass
 
     def perfect_match(self, text: str, all_text: tuple[str], line_number: int) -> bool:
+        pass
+
+    def patch_answer(
+        self, text: str, all_text: tuple[str], line_number: int, answer: str
+    ) -> str:
         pass
 
 
@@ -115,6 +128,11 @@ class TextChecker1(BasicTextChecker):
             )
             != []
         )
+
+    def patch_answer(
+        self, text: str, all_text: tuple[str], line_number: int, answer: str
+    ) -> str:
+        return f"验证：在“{answer}”功能中能够正确处理显示GB18030-2022中定义的字符"
 
 
 class TextChecker2(BasicTextChecker):

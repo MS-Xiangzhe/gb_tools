@@ -47,7 +47,7 @@ def main(
     extra=None,
     extra_only=False,
     default_yes=False,
-    skip_notify=False,
+    skip_change=False,
     ask_guess_replace=False,
 ):
     # init
@@ -56,7 +56,7 @@ def main(
         checker.default_yes = default_yes
 
     for checker in TEXT_CHECKER_LIST:
-        checker.skip_notify = skip_notify
+        checker.skip_change = skip_change
         checker.ask_guess_is_right = ask_guess_replace
 
     # process
@@ -128,7 +128,9 @@ if __name__ == "__main__":
     )
     parser.add_argument("-y", action="store_true", help="Default answer is yes")
     parser.add_argument(
-        "--skip-notify", action="store_true", help="Skip text change notification"
+        "--skip-change",
+        action="store_true",
+        help="Skip change, only print guess to log",
     )
     parser.add_argument(
         "--ask-guess-replace",
@@ -155,7 +157,7 @@ if __name__ == "__main__":
             extra=[i - 1 for i in args.extra] if args.extra else None,
             extra_only=args.extra_only,
             default_yes=args.y,
-            skip_notify=args.skip_notify,
+            skip_change=args.skip_change,
             ask_guess_replace=args.ask_guess_replace,
         )
 

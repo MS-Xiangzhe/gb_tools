@@ -5,7 +5,7 @@ param (
     [string]$extra = "",
     [switch]$extraOnly = $false,
     [switch]$y = $false,
-    [switch]$skipNotify = $false,
+    [switch]$skipChange = $false,
     [switch]$askGuessReplace = $false
 )
 $pythonVersion = & python --version 2>&1
@@ -35,8 +35,8 @@ if ($y) {
     $command += " -y"
 }
 
-if ($skipNotify) {
-    $command += " --skip-notify"
+if ($skipChange) {
+    $command += " --skip-change"
 }
 
 if ($askGuessReplace) {
