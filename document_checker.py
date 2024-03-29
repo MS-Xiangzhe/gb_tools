@@ -243,6 +243,11 @@ class DocumentChecker5(BasicChecker):
                     p = para._p
                     p.remove(hyper._hyperlink)
                     changed = True
+            for run in reversed(para.runs):
+                if not run.text.strip():
+                    para._p.remove(run._r)
+            run = para.runs[-1]
+            run.text = run.text.strip()
             if changed:
                 return para
 
@@ -408,6 +413,7 @@ class DocumentChecker9(BasicChecker):
         if self.score(para, all_text, line_number) > 0:
             printing("Paragraph text is:", para.text, file=self.logfile)
             changed_text = re.split("test|Test|TEST", para.text)[0]
+            changed_text = changed_text.strip()
             printing("Changed text is:", changed_text, file=self.logfile)
             answer = self.ask_for_process(
                 "Remove 'test' from text? (Y/n)", file=self.logfile
@@ -415,9 +421,8 @@ class DocumentChecker9(BasicChecker):
             if answer:
                 for run in list(reversed(para.runs))[:-1]:
                     para._p.remove(run._r)
-                run = para.runs[0].clear()
-                run.add_text(changed_text)
-                para.runs[0] = run
+                run = para.runs[-1]
+                run.text = changed_text
                 return para
 
     @staticmethod
@@ -455,12 +460,14 @@ class DocumentChecker10(BasicChecker):
                     changed_text += run.text
             printing("Changed text is:", changed_text, file=self.logfile)
             answer = self.ask_for_process(
-                "Remove 'test' from text? (Y/n)", file=self.logfile
+                "Remove the underline from text? (Y/n)", file=self.logfile
             )
             if answer:
                 for run in list(reversed(para.runs))[:-1]:
                     if run.underline:
                         para._p.remove(run._r)
+                run = para.runs[-1]
+                run.text = run.text.strip()
                 return para
 
     @staticmethod
