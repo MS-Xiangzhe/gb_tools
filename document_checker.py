@@ -31,10 +31,9 @@ class DocumentChecker1(BasicChecker):
         if paragragph_contains_image(paragraph):
             return 0
         score = 0
-        if (
-            paragraph.text.strip().startswith("验证：")
-            and paragraph.style.name == "Normal"
-            and paragraph.paragraph_format.line_spacing != 1.5
+        if paragraph.text.strip().startswith("验证：") and (
+            paragraph.paragraph_format.line_spacing != 1.5
+            or paragraph.style.name != "Normal"
         ):
             score += 1
         if "List Paragraph" == paragraph.style.name:
@@ -48,15 +47,18 @@ class DocumentChecker1(BasicChecker):
         if self.score(para, all_text, line_number) > 0 and not self.perfect_match(
             para, all_text, line_number
         ):
-            printing("Style:", para.style.name, file=self.logfile)
-            printing("Text:", para.text, file=self.logfile)
+            printing("Style(Normal):", para.style.name, file=self.logfile)
             printing(
-                "Line spacing:", para.paragraph_format.line_spacing, file=self.logfile
+                "Line spacing(1.5):",
+                para.paragraph_format.line_spacing,
+                file=self.logfile,
             )
+            printing("Text:", para.text, file=self.logfile)
             answer = self.ask_for_process(
-                "Fix line spacing to 1.5? (Y/n)", file=self.logfile
+                "Fix line spacing to 1.5 and style to Normal? (Y/n)", file=self.logfile
             )
             if answer:
+                para.style = "Normal"
                 para.paragraph_format.line_spacing = 1.5
                 return para
 
