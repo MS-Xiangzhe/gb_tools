@@ -16,6 +16,7 @@ from document_checker import (
     DocumentChecker8,
     DocumentChecker9,
     DocumentChecker10,
+    DocumentChecker11,
 )
 
 
@@ -34,6 +35,7 @@ DOCUMENT_CHECKER_LIST = [
     DocumentChecker4(),
     DocumentChecker7(),
     DocumentChecker8(),
+    DocumentChecker11(),
 ]
 
 EXTRA_CHECKER_LIST = [

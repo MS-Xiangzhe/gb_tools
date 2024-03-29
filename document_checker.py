@@ -478,3 +478,36 @@ class DocumentChecker10(BasicChecker):
     @staticmethod
     def perfect_match(paragraph, all_text: tuple[str], line_number: int) -> bool:
         pass
+
+
+class DocumentChecker11(BasicChecker):
+    @staticmethod
+    def score(paragraph, all_text: tuple[str], line_number: int) -> int:
+        if paragragph_contains_image(paragraph):
+            if paragraph.paragraph_format.first_line_indent:
+                return 1
+        return 0
+
+    def process(self, para, all_text: tuple[str], line_number: int) -> str | None:
+        if self.score(para, all_text, line_number) > 0:
+            printing("Contains image and first line indent is not 0", file=self.logfile)
+            printing("First line indent:", para.paragraph_format.first_line_indent)
+            printing("Line indent:", para.paragraph_format.left_indent)
+            answer = self.ask_for_process(
+                "Switch first line indent to line indent? (Y/n)", file=self.logfile
+            )
+            if answer:
+                para.paragraph_format.left_indent = (
+                    para.paragraph_format.first_line_indent
+                )
+                para.paragraph_format.first_line_indent = None
+                return para
+
+    @staticmethod
+    def guess(paragraph, all_text: tuple[str], line_number: int) -> str:
+        # Only can fix can't guess
+        pass
+
+    @staticmethod
+    def perfect_match(paragraph, all_text: tuple[str], line_number: int) -> bool:
+        pass
