@@ -58,8 +58,10 @@ class DocumentChecker1(BasicChecker):
                 "Fix line spacing to 1.5 and style to Normal? (Y/n)", file=self.logfile
             )
             if answer:
-                para.style = "Normal"
                 para.paragraph_format.line_spacing = 1.5
+                for run in para.runs:
+                    run.font.name = "SimSun"
+                    run.font.size = Pt(10)
                 return para
 
     @staticmethod
