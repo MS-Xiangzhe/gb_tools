@@ -524,14 +524,25 @@ class DocumentChecker12(BasicChecker):
         self.first_numId = None
 
     @staticmethod
+    def __check_para_bold(para: Paragraph) -> bool:
+        for run in para.runs:
+            if run.bold:
+                return True
+        return False
+
+    @staticmethod
     def score(paragraph, all_text: tuple[str], line_number: int) -> int:
         if paragragph_contains_image(paragraph):
             return 0
         try:
             next_line = all_text[line_number + 1]
+            next_2_line = all_text[line_number + 2]
         except IndexError:
             return 0
-        if next_line.text.startswith("验证："):
+        if next_line.text.startswith("验证：") or (
+            next_2_line.text.startswith("验证：")
+            and DocumentChecker12.__check_para_bold(paragraph)
+        ):
             numPr_elements = paragraph._p.xpath(".//w:numPr")
             if numPr_elements:
                 return 1
@@ -549,6 +560,20 @@ class DocumentChecker12(BasicChecker):
                     self.first_numId = numId_val
                     return numId_val
 
+    @staticmethod
+    def __get_num_level(paragraph, all_text: tuple[str], line_number: int) -> int:
+        try:
+            next_line = all_text[line_number + 1]
+            next_2_line = all_text[line_number + 2]
+        except IndexError:
+            return None
+        if next_line.text.startswith("验证："):
+            return 1
+        if next_2_line.text.startswith(
+            "验证："
+        ) and DocumentChecker12.__check_para_bold(paragraph):
+            return 0
+
     def process(self, para, all_text: tuple[str], line_number: int) -> str | None:
         if self.score(para, all_text, line_number) > 0:
             first_numId = self.__get_first_numId(all_text)
@@ -560,7 +585,8 @@ class DocumentChecker12(BasicChecker):
             printing("numId:", numId_elements, file=self.logfile)
             if self.ask_for_process("Fix numPr? (Y/n)", file=self.logfile):
                 if ilvl:
-                    ilvl[0].set(qn("w:val"), "1")
+                    level = self.__get_num_level(para, all_text, line_number)
+                    ilvl[0].set(qn("w:val"), str(level))
                 if numId_elements:
                     numId_elements[0].set(qn("w:val"), first_numId)
                 return para
