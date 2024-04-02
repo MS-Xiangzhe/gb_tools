@@ -587,6 +587,7 @@ class DocumentChecker12(BasicChecker):
             printing("Text without number is:", text, file=self.logfile)
             if self.ask_for_process("Fix style? (Y/n)", file=self.logfile):
                 para.style = "List Paragraph"
+                para.paragraph_format.left_indent = Pt(21.6)
                 ppr = para._p.xpath(".//w:pPr")[0]
                 numPr_element = Element(qn("w:numPr"))
                 ilvl = Element(qn("w:ilvl"))
