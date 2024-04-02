@@ -2,6 +2,7 @@ from docx.text.paragraph import Paragraph
 from docx.text.run import Run
 from docx.shared import Pt
 from basic_checker import BasicChecker
+from docx.oxml.ns import qn
 
 from utils import printing
 
@@ -505,6 +506,63 @@ class DocumentChecker11(BasicChecker):
                     para.paragraph_format.first_line_indent
                 )
                 para.paragraph_format.first_line_indent = None
+                return para
+
+    @staticmethod
+    def guess(paragraph, all_text: tuple[str], line_number: int) -> str:
+        # Only can fix can't guess
+        pass
+
+    @staticmethod
+    def perfect_match(paragraph, all_text: tuple[str], line_number: int) -> bool:
+        pass
+
+
+class DocumentChecker12(BasicChecker):
+    def __init__(self) -> None:
+        super().__init__()
+        self.first_numId = None
+
+    @staticmethod
+    def score(paragraph, all_text: tuple[str], line_number: int) -> int:
+        if paragragph_contains_image(paragraph):
+            return 0
+        try:
+            next_line = all_text[line_number + 1]
+        except IndexError:
+            return 0
+        if next_line.text.startswith("验证："):
+            numPr_elements = paragraph._p.xpath(".//w:numPr")
+            if numPr_elements:
+                return 1
+        return 0
+
+    def __get_first_numId(self, all_para: list[Paragraph]):
+        if self.first_numId:
+            return self.first_numId
+        for para in all_para:
+            numPr_elements = para._p.xpath('.//w:numPr[w:ilvl/@w:val="0"]')
+            if numPr_elements:
+                numId_val = numPr_elements[0].xpath(".//w:numId/@w:val")
+                if numId_val:
+                    numId_val = numId_val[0]
+                    self.first_numId = numId_val
+                    return numId_val
+
+    def process(self, para, all_text: tuple[str], line_number: int) -> str | None:
+        if self.score(para, all_text, line_number) > 0:
+            first_numId = self.__get_first_numId(all_text)
+            printing("First numId:", first_numId, file=self.logfile)
+            numPr_elements = para._p.xpath(".//w:numPr")
+            ilvl = numPr_elements[0].xpath(".//w:ilvl")
+            printing("ilvl:", ilvl, file=self.logfile)
+            numId_elements = numPr_elements[0].xpath(".//w:numId")
+            printing("numId:", numId_elements, file=self.logfile)
+            if self.ask_for_process("Fix numPr? (Y/n)", file=self.logfile):
+                if ilvl:
+                    ilvl[0].set(qn("w:val"), "1")
+                if numId_elements:
+                    numId_elements[0].set(qn("w:val"), first_numId)
                 return para
 
     @staticmethod
