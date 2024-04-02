@@ -3,6 +3,7 @@ from docx.text.run import Run
 from docx.shared import Pt
 from basic_checker import BasicChecker
 from docx.oxml.ns import qn
+from lxml.etree import Element
 
 from utils import printing
 
@@ -248,7 +249,7 @@ class DocumentChecker5(BasicChecker):
                     p = para._p
                     p.remove(hyper._hyperlink)
                     changed = True
-            for run in reversed(para.runs):
+            for run in reversed(list(para.runs)[1:]):
                 if not run.text.strip():
                     para._p.remove(run._r)
             run = para.runs[-1]
@@ -444,51 +445,6 @@ class DocumentChecker10(BasicChecker):
     @staticmethod
     def score(paragraph, all_text: tuple[str], line_number: int) -> int:
         if paragragph_contains_image(paragraph):
-            return 0
-        try:
-            next_line = all_text[line_number + 1]
-        except IndexError:
-            return 0
-        score = 0
-        if next_line.text.startswith("验证："):
-            for run in paragraph.runs:
-                if run.underline:
-                    score += 1
-        return score
-
-    def process(self, para, all_text: tuple[str], line_number: int) -> str | None:
-        if self.score(para, all_text, line_number) > 0:
-            printing("Paragraph text is:", para.text, file=self.logfile)
-            changed_text = ""
-            for run in para.runs:
-                if run.underline:
-                    changed_text += run.text
-            printing("Changed text is:", changed_text, file=self.logfile)
-            answer = self.ask_for_process(
-                "Remove the underline from text? (Y/n)", file=self.logfile
-            )
-            if answer:
-                for run in list(reversed(para.runs))[:-1]:
-                    if run.underline:
-                        para._p.remove(run._r)
-                run = para.runs[-1]
-                run.text = run.text.strip()
-                return para
-
-    @staticmethod
-    def guess(paragraph, all_text: tuple[str], line_number: int) -> str:
-        # Only can fix can't guess
-        pass
-
-    @staticmethod
-    def perfect_match(paragraph, all_text: tuple[str], line_number: int) -> bool:
-        pass
-
-
-class DocumentChecker11(BasicChecker):
-    @staticmethod
-    def score(paragraph, all_text: tuple[str], line_number: int) -> int:
-        if paragragph_contains_image(paragraph):
             if paragraph.paragraph_format.first_line_indent:
                 return 1
         return 0
@@ -518,17 +474,17 @@ class DocumentChecker11(BasicChecker):
         pass
 
 
-class DocumentChecker12(BasicChecker):
+class DocumentChecker11(BasicChecker):
     def __init__(self) -> None:
         super().__init__()
         self.first_numId = None
 
     @staticmethod
-    def __check_para_bold(para: Paragraph) -> bool:
+    def _check_para_bold(para: Paragraph) -> bool:
         for run in para.runs:
-            if run.bold:
-                return True
-        return False
+            if not run.bold:
+                return False
+        return True
 
     @staticmethod
     def score(paragraph, all_text: tuple[str], line_number: int) -> int:
@@ -541,7 +497,7 @@ class DocumentChecker12(BasicChecker):
             return 0
         if next_line.text.startswith("验证：") or (
             next_2_line.text.startswith("验证：")
-            and DocumentChecker12.__check_para_bold(paragraph)
+            and DocumentChecker11._check_para_bold(paragraph)
         ):
             numPr_elements = paragraph._p.xpath(".//w:numPr")
             if numPr_elements:
@@ -571,7 +527,7 @@ class DocumentChecker12(BasicChecker):
             return 1
         if next_2_line.text.startswith(
             "验证："
-        ) and DocumentChecker12.__check_para_bold(paragraph):
+        ) and DocumentChecker11._check_para_bold(paragraph):
             return 0
 
     def process(self, para, all_text: tuple[str], line_number: int) -> str | None:
@@ -587,8 +543,66 @@ class DocumentChecker12(BasicChecker):
                 if ilvl:
                     level = self.__get_num_level(para, all_text, line_number)
                     ilvl[0].set(qn("w:val"), str(level))
+
                 if numId_elements:
                     numId_elements[0].set(qn("w:val"), first_numId)
+                return para
+
+    @staticmethod
+    def guess(paragraph, all_text: tuple[str], line_number: int) -> str:
+        # Only can fix can't guess
+        pass
+
+    @staticmethod
+    def perfect_match(paragraph, all_text: tuple[str], line_number: int) -> bool:
+        pass
+
+
+class DocumentChecker12(BasicChecker):
+    @staticmethod
+    def score(paragraph, all_text: tuple[str], line_number: int) -> int:
+        if paragragph_contains_image(paragraph):
+            return 0
+        try:
+            next_line = all_text[line_number + 1]
+            next_2_line = all_text[line_number + 2]
+        except IndexError:
+            return 0
+        score = 0
+        if next_line.text.startswith("验证：") or next_2_line.text.startswith("验证："):
+            if paragraph.style.name != "List Paragraph":
+                score += 1
+            if not DocumentChecker11._check_para_bold(paragraph):
+                score += 1
+        return score
+
+    def process(self, para, all_text: tuple[str], line_number: int) -> str | None:
+        if self.score(para, all_text, line_number) > 0:
+            printing("Paragraph sytle is:", para.style.name, file=self.logfile)
+            printing(
+                "Paragraph text style (bold): ", para.runs[0].bold, file=self.logfile
+            )
+            printing("Paragraph text is:", para.text, file=self.logfile)
+            text = re.sub(r'^\d+(\.\d+)*', '', para.runs[0].text).strip()
+            printing("Text without number is:", text, file=self.logfile)
+            if self.ask_for_process("Fix style? (Y/n)", file=self.logfile):
+                para.style = "List Paragraph"
+                ppr = para._p.xpath(".//w:pPr")[0]
+                numPr_element = Element(qn("w:numPr"))
+                ilvl = Element(qn("w:ilvl"))
+                ilvl.set(qn("w:val"), "0")
+                numPr_element.append(ilvl)
+                numId = Element(qn("w:numId"))
+                numId.set(qn("w:val"), "0")
+                numPr_element.append(numId)
+                ppr.append(numPr_element)
+                for run in para.runs:
+                    if run.text:
+                        text = re.sub(r'^\d+(\.\d+)*', '', run.text).strip()
+                        run.text = text
+                    break
+                for run in para.runs:
+                    run.bold = True
                 return para
 
     @staticmethod

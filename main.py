@@ -7,6 +7,10 @@ from docx import Document
 from text_checker import TextChecker1, TextChecker2
 from document_checker import (
     DocumentChecker1,
+    DocumentChecker10,
+    DocumentChecker10,
+    DocumentChecker11,
+    DocumentChecker12,
     DocumentChecker2,
     DocumentChecker3,
     DocumentChecker4,
@@ -15,9 +19,6 @@ from document_checker import (
     DocumentChecker7,
     DocumentChecker8,
     DocumentChecker9,
-    DocumentChecker10,
-    DocumentChecker11,
-    DocumentChecker12,
 )
 
 
@@ -36,14 +37,17 @@ DOCUMENT_CHECKER_LIST = [
     DocumentChecker4(),
     DocumentChecker7(),
     DocumentChecker8(),
-    DocumentChecker11(),
+    DocumentChecker10(),
 ]
 
 EXTRA_CHECKER_LIST = [
     DocumentChecker5(),
     DocumentChecker6(),
     DocumentChecker9(),
-    DocumentChecker10(),
+    DocumentChecker11(),
+]
+
+PRE_EXTRA_CHECKER_LIST = [
     DocumentChecker12(),
 ]
 
@@ -52,6 +56,7 @@ def main(
     path,
     output,
     logfile=None,
+    pre_extra=None,
     extra=None,
     extra_only=False,
     default_yes=False,
@@ -59,7 +64,12 @@ def main(
     ask_guess_replace=False,
 ):
     # init
-    for checker in TEXT_CHECKER_LIST + DOCUMENT_CHECKER_LIST + EXTRA_CHECKER_LIST:
+    for checker in (
+        TEXT_CHECKER_LIST
+        + DOCUMENT_CHECKER_LIST
+        + EXTRA_CHECKER_LIST
+        + PRE_EXTRA_CHECKER_LIST
+    ):
         checker.logfile = logfile
         checker.default_yes = default_yes
 
@@ -70,8 +80,25 @@ def main(
     # process
     doc = Document(path)
     all_text = get_all_text(doc)
+    printing("Pre-extra checkers", file=logfile)
     changed = False
+    for line_number, paragraph in enumerate(all_text):
+        printing(line_number, paragraph.text, file=logfile)
+        paragraph = all_text[line_number]
+        for i in range(len(PRE_EXTRA_CHECKER_LIST)):
+            if pre_extra and i in pre_extra:
+                checker = PRE_EXTRA_CHECKER_LIST[i]
+                para = checker.process(paragraph, all_text, line_number)
+                if para:
+                    changed = True
+    if changed:
+        answer = input(f"Save document? (To {output})(PRE) (Y/n)")
+        answer = answer.strip().lower()
+        if answer == "y" or not answer:
+            doc.save(output)
+    printing("--" * 10, file=logfile)
     printing("Auto-fixing document", file=logfile)
+    changed = False
     for line_number, paragraph in enumerate(all_text):
         printing(line_number, paragraph.text, file=logfile)
         paragraph = all_text[line_number]
@@ -88,7 +115,7 @@ def main(
             if para:
                 changed = True
     if changed:
-        answer = input(f"Save document? (To {output}) (Y/n)")
+        answer = input(f"Save document? (To {output})(MAIN) (Y/n)")
         answer = answer.strip().lower()
         if answer == "y" or not answer:
             doc.save(output)
@@ -104,7 +131,7 @@ def main(
             if txt:
                 changed = True
     if changed:
-        answer = input(f"Save document? (To {output}) (Y/n)")
+        answer = input(f"Save document? (To {output})(TEXT) (Y/n)")
         answer = answer.strip().lower()
         if answer == "y" or not answer:
             doc.save(output)
@@ -128,6 +155,9 @@ if __name__ == "__main__":
         "--output", default="output.docx", help="Path to the output file"
     )
     parser.add_argument("--logfile", default="logfile.txt", help="Path to the log file")
+    parser.add_argument(
+        "--pre-extra", nargs="+", type=int, default=None, help="Select extra pre-checkers"
+    )
     parser.add_argument(
         "--extra", nargs="+", type=int, default=None, help="Select extra checkers"
     )
@@ -154,6 +184,7 @@ if __name__ == "__main__":
     printing("Path:", path)
     printing("Output:", output)
     printing("Logfile:", logfile_path)
+    printing("Pre-extra checkers:", args.pre_extra)
     printing("Extra checkers:", args.extra)
     printing("Extra only:", args.extra_only)
 
@@ -162,6 +193,7 @@ if __name__ == "__main__":
             path,
             output,
             logfile,
+            pre_extra=[i - 1 for i in args.pre_extra] if args.pre_extra else None,
             extra=[i - 1 for i in args.extra] if args.extra else None,
             extra_only=args.extra_only,
             default_yes=args.y,

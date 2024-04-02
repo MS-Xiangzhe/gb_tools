@@ -2,6 +2,7 @@ param (
     [string]$path = "",
     [string]$output = "output.docx",
     [string]$logfile = "logfile.txt",
+    [string]$preExtra = "",
     [string]$extra = "",
     [switch]$extraOnly = $false,
     [switch]$y = $false,
@@ -42,6 +43,16 @@ if ($skipChange) {
 if ($askGuessReplace) {
     $command += " --ask-guess-replace"
 }
+
+$extraArgs = ""
+if ($preExtra) {
+    $extraArray = $preExtra -split ","
+    $extraArgs += " --pre-extra"
+    foreach ($arg in $extraArray) {
+        $extraArgs += " $arg"
+    }
+}
+$command += $extraArgs
 
 $extraArgs = ""
 if ($extra) {
