@@ -525,9 +525,9 @@ class DocumentChecker11(BasicChecker):
             return None
         if next_line.text.startswith("验证："):
             return 1
-        if next_2_line.text.startswith(
-            "验证："
-        ) and DocumentChecker11._check_para_bold(paragraph):
+        if next_2_line.text.startswith("验证：") and DocumentChecker11._check_para_bold(
+            paragraph
+        ):
             return 0
 
     def process(self, para, all_text: tuple[str], line_number: int) -> str | None:
@@ -583,7 +583,8 @@ class DocumentChecker12(BasicChecker):
                 "Paragraph text style (bold): ", para.runs[0].bold, file=self.logfile
             )
             printing("Paragraph text is:", para.text, file=self.logfile)
-            text = re.sub(r'^\d+(\.\d+)*', '', para.runs[0].text).strip()
+            re_text = r"^\d+(\.\d+|．\d+)*(\s*|　*)"
+            text = re.sub(re_text, "", para.text).strip()
             printing("Text without number is:", text, file=self.logfile)
             if self.ask_for_process("Fix style? (Y/n)", file=self.logfile):
                 para.style = "List Paragraph"
@@ -597,11 +598,35 @@ class DocumentChecker12(BasicChecker):
                 numId.set(qn("w:val"), "0")
                 numPr_element.append(numId)
                 ppr.append(numPr_element)
+                title_index = para.text.find(text)
+                remove_runs = []
+                remove_index = 0
                 for run in para.runs:
-                    if run.text:
-                        text = re.sub(r'^\d+(\.\d+)*', '', run.text).strip()
-                        run.text = text
-                    break
+                    run_length = len(run.text)
+                    title_index -= run_length
+                    if title_index >= 0:
+                        remove_runs.append(run)
+                    else:
+                        remove_index = title_index + run_length
+                        break
+
+                # Remove the runs
+                if not remove_runs:
+                    printing("No runs to remove", file=self.logfile)
+                for run in remove_runs:
+                    printing("Remove run:", run.text, file=self.logfile)
+                    para._p.remove(run._r)
+
+                if remove_index:
+                    printing("Remove index:", remove_index, file=self.logfile)
+                    printing("Run text:", para.runs[0].text, file=self.logfile)
+                    printing(
+                        "Remaining text:",
+                        para.runs[0].text[remove_index:],
+                        file=self.logfile,
+                    )
+                    para.runs[0].text = para.runs[0].text[remove_index:]
+
                 for run in para.runs:
                     run.bold = True
                 return para
