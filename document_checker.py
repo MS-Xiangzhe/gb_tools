@@ -517,7 +517,7 @@ class DocumentChecker11(BasicChecker):
                     return numId_val
 
     @staticmethod
-    def __get_num_level(paragraph, all_text: tuple[str], line_number: int) -> int:
+    def _get_num_level(paragraph, all_text: tuple[str], line_number: int) -> int:
         try:
             next_line = all_text[line_number + 1]
             next_2_line = all_text[line_number + 2]
@@ -541,7 +541,7 @@ class DocumentChecker11(BasicChecker):
             printing("numId:", numId_elements, file=self.logfile)
             if self.ask_for_process("Fix numPr? (Y/n)", file=self.logfile):
                 if ilvl:
-                    level = self.__get_num_level(para, all_text, line_number)
+                    level = self._get_num_level(para, all_text, line_number)
                     ilvl[0].set(qn("w:val"), str(level))
 
                 if numId_elements:
@@ -588,7 +588,8 @@ class DocumentChecker12(BasicChecker):
             printing("Text without number is:", text, file=self.logfile)
             if self.ask_for_process("Fix style? (Y/n)", file=self.logfile):
                 para.style = "List Paragraph"
-                para.paragraph_format.left_indent = Pt(21.6)
+                if DocumentChecker11._get_num_level(para, all_text, line_number) == 1:
+                    para.paragraph_format.left_indent = Pt(21.6)
                 ppr = para._p.xpath(".//w:pPr")[0]
                 if not ppr.xpath(".//w:numPr"):
                     numPr_element = Element(qn("w:numPr"))
