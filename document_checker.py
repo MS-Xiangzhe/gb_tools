@@ -568,13 +568,13 @@ class DocumentChecker12(BasicChecker):
             next_2_line = all_text[line_number + 2]
         except IndexError:
             return 0
-        score = 0
-        if next_line.text.startswith("验证：") or next_2_line.text.startswith("验证："):
-            if paragraph.style.name != "List Paragraph":
-                score += 1
-            if not DocumentChecker11._check_para_bold(paragraph):
-                score += 1
-        return score
+        if next_line.text.startswith("验证："):
+            return 1
+        elif next_2_line.text.startswith(
+            "验证："
+        ) and DocumentChecker11._check_para_bold(paragraph):
+            return 1
+        return 0
 
     def process(self, para, all_text: tuple[str], line_number: int) -> str | None:
         if self.score(para, all_text, line_number) > 0:
@@ -590,14 +590,15 @@ class DocumentChecker12(BasicChecker):
                 para.style = "List Paragraph"
                 para.paragraph_format.left_indent = Pt(21.6)
                 ppr = para._p.xpath(".//w:pPr")[0]
-                numPr_element = Element(qn("w:numPr"))
-                ilvl = Element(qn("w:ilvl"))
-                ilvl.set(qn("w:val"), "0")
-                numPr_element.append(ilvl)
-                numId = Element(qn("w:numId"))
-                numId.set(qn("w:val"), "0")
-                numPr_element.append(numId)
-                ppr.append(numPr_element)
+                if not ppr.xpath(".//w:numPr"):
+                    numPr_element = Element(qn("w:numPr"))
+                    ilvl = Element(qn("w:ilvl"))
+                    ilvl.set(qn("w:val"), "0")
+                    numPr_element.append(ilvl)
+                    numId = Element(qn("w:numId"))
+                    numId.set(qn("w:val"), "0")
+                    numPr_element.append(numId)
+                    ppr.append(numPr_element)
                 title_index = para.text.find(text)
                 remove_runs = []
                 remove_index = 0
