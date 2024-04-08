@@ -51,11 +51,14 @@ PRE_EXTRA_CHECKER_LIST = [
     DocumentChecker12(),
 ]
 
+DOC_RANGE_TEXT = "///"
+
 
 def main(
     path,
     output,
     logfile=None,
+    doc_range=False,
     pre_extra=None,
     extra=None,
     extra_only=False,
@@ -80,7 +83,24 @@ def main(
     # process
     doc = Document(path)
     all_text = get_all_text(doc)
+    if doc_range:
+        start = None
+        end = None
+        for i, para in enumerate(all_text):
+            if para.text.strip() == DOC_RANGE_TEXT:
+                if start is None:
+                    start = i + 1
+                else:
+                    end = i
+                    break
+        printing(f"Document range, start: {start}, end: {end}", file=logfile)
+        if start is not None and end is not None:
+            all_text = all_text[start:end]
+        else:
+            printing("Document range not found.", file=logfile)
+            exit(1)
     printing("Pre-extra checkers", file=logfile)
+
     changed = False
     for line_number, paragraph in enumerate(all_text):
         printing(line_number, paragraph.text, file=logfile)
@@ -175,6 +195,11 @@ if __name__ == "__main__":
         action="store_true",
         help="If guess is not match, ask user to type the correct text (Or answer yes/no)",
     )
+    parser.add_argument(
+        "--doc-range",
+        action="store_true",
+        help=f"Document range, only process the range of document start/end with {DOC_RANGE_TEXT}",
+    )
 
     args = parser.parse_args()
     path = expanduser(args.path)
@@ -187,6 +212,7 @@ if __name__ == "__main__":
     printing("Pre-extra checkers:", args.pre_extra)
     printing("Extra checkers:", args.extra)
     printing("Extra only:", args.extra_only)
+    printing("Doc range:", args.doc_range)
 
     with open(logfile_path, "w+", encoding="utf-8") as logfile:
         main(
@@ -199,6 +225,7 @@ if __name__ == "__main__":
             default_yes=args.y,
             skip_change=args.skip_change,
             ask_guess_replace=args.ask_guess_replace,
+            doc_range=args.doc_range,
         )
 
     if logfile_path:

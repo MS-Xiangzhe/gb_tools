@@ -2,6 +2,7 @@ param (
     [string]$path = "",
     [string]$output = "output.docx",
     [string]$logfile = "logfile.txt",
+    [switch]$docRange = $false,
     [string]$preExtra = "",
     [string]$extra = "",
     [switch]$extraOnly = $false,
@@ -29,6 +30,9 @@ if (!(Test-Path .venv)) {
 pip install -r requirements.txt
 
 $command = "python main.py --path '$path' --output '$output' --logfile '$logfile'"
+if ($docRange) {
+    $command += " --doc-range"
+}
 if ($extraOnly) {
     $command += " --extra-only"
 }
