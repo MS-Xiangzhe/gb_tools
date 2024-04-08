@@ -1,3 +1,4 @@
+from docx import Document
 from docx.text.paragraph import Paragraph
 from docx.text.run import Run
 from docx.shared import Pt
@@ -5,7 +6,8 @@ from basic_checker import BasicChecker
 from docx.oxml.ns import qn
 from lxml.etree import Element
 
-from utils import printing
+from utils import printing, xpath_auto_ns
+from typing import Union
 
 import re
 from copy import copy
@@ -631,6 +633,79 @@ class DocumentChecker12(BasicChecker):
 
                 for run in para.runs:
                     run.bold = True
+                return para
+
+    @staticmethod
+    def guess(paragraph, all_text: tuple[str], line_number: int) -> str:
+        # Only can fix can't guess
+        pass
+
+    @staticmethod
+    def perfect_match(paragraph, all_text: tuple[str], line_number: int) -> bool:
+        pass
+
+
+class DocumentChecker13(BasicChecker):
+
+    def __init__(self, doc: Document) -> None:
+        super().__init__()
+        self.doc = doc
+
+    @staticmethod
+    def score(paragraph, all_text: tuple[str], line_number: int) -> int:
+        numPr_elements = paragraph._p.xpath(".//w:numPr")
+        if numPr_elements:
+            return 1
+        return 0
+
+    def __get_numId(self, para: Paragraph) -> Union[tuple[int, int], None]:
+        numPr_elements = para._p.xpath(".//w:numPr")
+        if numPr_elements:
+            numId_val = numPr_elements[0].xpath(".//w:numId/@w:val")
+            numLevel = numPr_elements[0].xpath(".//w:ilvl/@w:val")
+            if numId_val and numLevel:
+                return (int(numId_val[0]), int(numLevel[0]))
+
+    def __set_num_font(self, numId: str, numLevel: str, font: str) -> bool:
+        numberning_part = self.doc.part.numbering_part
+        numbering_xml = numberning_part._element
+        num_w = numbering_xml.num_having_numId(numId)
+        abstractNumId = num_w.xpath(".//w:abstractNumId/@w:val")[0]
+        abstractNum = xpath_auto_ns(
+            numbering_xml, f".//w:abstractNum[@w:abstractNumId='{abstractNumId}']"
+        )[0]
+        lvl = xpath_auto_ns(abstractNum, f".//w:lvl[@w:ilvl='{numLevel}']")[0]
+        rPr_element = xpath_auto_ns(lvl, ".//w:rPr")
+        need_append = False
+        if not rPr_element:
+            rPr_element = Element(qn("w:rPr"))
+            need_append = True
+        else:
+            rPr_element = rPr_element[0]
+        font_element = xpath_auto_ns(rPr_element, ".//w:rFonts")
+        if font_element:
+            rPr_element.remove(font_element[0])
+        font_element = Element(qn("w:rFonts"))
+        font_element.set(qn("w:ascii"), font)
+        font_element.set(qn("w:hAnsi"), font)
+        font_element.set(qn("w:hint"), "eastAsia")
+        rPr_element.append(font_element)
+        if need_append:
+            lvl.append(rPr_element)
+
+    def process(self, para, all_text: tuple[str], line_number: int) -> str | None:
+        if self.score(para, all_text, line_number) > 0:
+            num = self.__get_numId(para)
+            if not num:
+                return
+            numId, numLevel = num
+            printing("numId:", numId, file=self.logfile)
+            printing("numLevel:", numLevel, file=self.logfile)
+            if self.ask_for_process(
+                "Change num Font(Simsun)? (Y/n)", file=self.logfile
+            ):
+                if numId is not None and numLevel is not None:
+                    self.__set_num_font(numId, numLevel, "SimSun")
                 return para
 
     @staticmethod

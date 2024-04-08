@@ -7,10 +7,6 @@ from docx import Document
 from text_checker import TextChecker1, TextChecker2
 from document_checker import (
     DocumentChecker1,
-    DocumentChecker10,
-    DocumentChecker10,
-    DocumentChecker11,
-    DocumentChecker12,
     DocumentChecker2,
     DocumentChecker3,
     DocumentChecker4,
@@ -19,6 +15,10 @@ from document_checker import (
     DocumentChecker7,
     DocumentChecker8,
     DocumentChecker9,
+    DocumentChecker10,
+    DocumentChecker11,
+    DocumentChecker12,
+    DocumentChecker13,
 )
 
 
@@ -67,6 +67,9 @@ def main(
     ask_guess_replace=False,
 ):
     # init
+    doc = Document(path)
+    EXTRA_CHECKER_LIST.append(DocumentChecker13(doc))
+    all_text = get_all_text(doc)
     for checker in (
         TEXT_CHECKER_LIST
         + DOCUMENT_CHECKER_LIST
@@ -81,8 +84,6 @@ def main(
         checker.ask_guess_is_right = ask_guess_replace
 
     # process
-    doc = Document(path)
-    all_text = get_all_text(doc)
     if doc_range:
         start = None
         end = None
@@ -176,7 +177,11 @@ if __name__ == "__main__":
     )
     parser.add_argument("--logfile", default="logfile.txt", help="Path to the log file")
     parser.add_argument(
-        "--pre-extra", nargs="+", type=int, default=None, help="Select extra pre-checkers"
+        "--pre-extra",
+        nargs="+",
+        type=int,
+        default=None,
+        help="Select extra pre-checkers",
     )
     parser.add_argument(
         "--extra", nargs="+", type=int, default=None, help="Select extra checkers"
