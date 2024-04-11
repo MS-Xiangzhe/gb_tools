@@ -591,7 +591,7 @@ class DocumentChecker12(BasicChecker):
             if self.ask_for_process("Fix style? (Y/n)", file=self.logfile):
                 para.style = "List Paragraph"
                 if DocumentChecker11._get_num_level(para, all_text, line_number) == 1:
-                    para.paragraph_format.left_indent = Pt(21.6)
+                    para.paragraph_format.left_indent = Pt(20)
                 ppr = para._p.xpath(".//w:pPr")[0]
                 if not ppr.xpath(".//w:numPr"):
                     numPr_element = Element(qn("w:numPr"))
