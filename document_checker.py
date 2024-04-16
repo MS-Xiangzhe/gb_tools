@@ -667,7 +667,10 @@ class DocumentChecker13(BasicChecker):
     def __set_num_font(self, numId: str, numLevel: str, font: str) -> bool:
         numberning_part = self.doc.part.numbering_part
         numbering_xml = numberning_part._element
-        num_w = numbering_xml.num_having_numId(numId)
+        try:
+            num_w = numbering_xml.num_having_numId(numId)
+        except KeyError:
+            return False
         abstractNumId = num_w.xpath(".//w:abstractNumId/@w:val")[0]
         abstractNum = xpath_auto_ns(
             numbering_xml, f".//w:abstractNum[@w:abstractNumId='{abstractNumId}']"
