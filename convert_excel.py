@@ -14,8 +14,8 @@ path = expanduser(args.path)
 output = expanduser(args.output)
 workbook = load_workbook(path)
 
-if not Path(output).exists():
-    print("Output file does not exist")
+if not Path(path).exists():
+    print("Source file not found")
     exit(1)
 
 worksheet = workbook.get_sheet_by_name(args.input_sheet)
