@@ -1,6 +1,7 @@
 import argparse
 from os.path import expanduser
 
+from pathlib import Path
 from utils import printing
 
 from docx import Document
@@ -66,6 +67,10 @@ def main(
     skip_change=False,
     ask_guess_replace=False,
 ):
+    # check file exist
+    if not Path(path).exists():
+        printing(f"File not found: {path}", file=logfile)
+        exit(1)
     # init
     doc = Document(path)
     EXTRA_CHECKER_LIST.append(DocumentChecker13(doc))

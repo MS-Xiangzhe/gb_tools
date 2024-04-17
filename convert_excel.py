@@ -1,6 +1,7 @@
 from openpyxl import load_workbook, Workbook
 import argparse
 from os.path import expanduser
+from pathlib import Path
 import re
 
 
@@ -12,6 +13,10 @@ args = parser.parse_args()
 path = expanduser(args.path)
 output = expanduser(args.output)
 workbook = load_workbook(path)
+
+if not Path(output).exists():
+    print("Output file does not exist")
+    exit(1)
 
 worksheet = workbook.get_sheet_by_name(args.input_sheet)
 
