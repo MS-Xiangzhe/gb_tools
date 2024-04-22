@@ -6,6 +6,7 @@ param (
     [string]$preExtra = "",
     [string]$extra = "",
     [switch]$extraOnly = $false,
+    [switch]$passText = $false,
     [switch]$y = $false,
     [switch]$skipChange = $false,
     [switch]$askGuessReplace = $false
@@ -35,6 +36,9 @@ if ($docRange) {
 }
 if ($extraOnly) {
     $command += " --extra-only"
+}
+if ($passText) {
+    $command += " --pass-text"
 }
 if ($y) {
     $command += " -y"

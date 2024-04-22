@@ -63,6 +63,7 @@ def main(
     pre_extra=None,
     extra=None,
     extra_only=False,
+    pass_text=False,
     default_yes=False,
     skip_change=False,
     ask_guess_replace=False,
@@ -145,6 +146,8 @@ def main(
         answer = answer.strip().lower()
         if answer == "y" or not answer:
             doc.save(output)
+    if pass_text:
+        return
     printing("--" * 10, file=logfile)
     printing("Manual fixing document", file=logfile)
     for line_number, paragraph in enumerate(all_text):
@@ -194,6 +197,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--extra-only", action="store_true", help="Run only extra checkers"
     )
+    parser.add_argument(
+        "--pass-text", action="store_true", help="Pass text checkers"
+    )
     parser.add_argument("-y", action="store_true", help="Default answer is yes")
     parser.add_argument(
         "--skip-change",
@@ -236,6 +242,7 @@ if __name__ == "__main__":
             skip_change=args.skip_change,
             ask_guess_replace=args.ask_guess_replace,
             doc_range=args.doc_range,
+            pass_text=args.pass_text,
         )
 
     if logfile_path:
