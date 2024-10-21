@@ -14,6 +14,8 @@ START_TITLE_LIST = [
     "Microsoft Teams for iOS no GB checkpoint",
 ]
 
+PART2_TITLE_LIST = []
+
 
 @dataclass
 class DocumentPart2:
@@ -85,16 +87,12 @@ def txt_parse_document_part(paragraphs: list[Paragraph]) -> list[DocumentPart]:
         if line.text.strip() in START_TITLE_LIST:
             create_new_part = True
             create_new_part2 = True
-        elif line._element.xpath(".//w:ilvl"):
-            if tmp_list and not (
-                chinese_pattern.search(lines[i - 1].text)
-                and not chinese_pattern.search(line.text)
-            ):
-                # Look like is in the same part
-                pass
-            else:
-                create_new_part2 = True
-            # Remove d) from the line
+        elif (
+            line.text.strip() in PART2_TITLE_LIST
+            and line.text.strip() == PART2_TITLE_LIST[0]
+        ):
+            PART2_TITLE_LIST.pop(0)
+            create_new_part2 = True
         if i >= len(lines) - 1:
             tmp_list.append(line)
             create_new_part2 = True
@@ -174,12 +172,31 @@ def doc_add_paragraph(
                     paragraph._element.append(run_xml)
 
 
+def init_part2_title_list(lines: list[str]):
+    for line in lines:
+        # if line.strip().startswith number with )
+        line = line.strip()
+        if not line:
+            continue
+        if re.match(r"^\d+\)", line):
+            # remove number with )
+            line = line.split(")", 1)[1].strip()
+            PART2_TITLE_LIST.append(line)
+
+
 def main():
     parser = ArgumentParser(description="Process some files.")
     parser.add_argument("--temp", required=True, help="Path to the template file")
+    parser.add_argument(
+        "--compare", required=True, help="Path to the compare file for part2 title"
+    )
     parser.add_argument("--doc", required=True, help="Path to the output file")
     args = parser.parse_args()
     doc_path = args.temp
+    # read use UTF-8
+    with open(args.compare, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+        init_part2_title_list(lines)
     doc = Document(doc_path)
     paragraphs = doc.paragraphs
     content_start_index = None
