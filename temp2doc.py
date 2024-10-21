@@ -68,6 +68,9 @@ def _remove_number_from_paragraph(paragraph: Paragraph) -> Paragraph:
     return paragraph
 
 
+chinese_pattern = re.compile(r"[\u4e00-\u9fff]")
+
+
 def txt_parse_document_part(paragraphs: list[Paragraph]) -> list[DocumentPart]:
     lines = [line for line in paragraphs if line.text.strip()]
     part1_list = []
@@ -80,18 +83,27 @@ def txt_parse_document_part(paragraphs: list[Paragraph]) -> list[DocumentPart]:
         # Check line is start with number)
         # And get the number
         if line.text.strip() in START_TITLE_LIST:
-            part1_list.append(DocumentPart(lines[i], part_list=[]))
             create_new_part = True
             create_new_part2 = True
-        elif line.style.name == "1)英文标题":
-            create_new_part2 = True
+        elif line._element.xpath(".//w:ilvl"):
+            if tmp_list and not (
+                chinese_pattern.search(lines[i - 1].text)
+                and not chinese_pattern.search(line.text)
+            ):
+                # Look like is in the same part
+                pass
+            else:
+                create_new_part2 = True
             # Remove d) from the line
         if i >= len(lines) - 1:
+            tmp_list.append(line)
             create_new_part2 = True
         if create_new_part2 and tmp_list:
             part1_list[-1].part_list.append(txt_lines_to_part2(tmp_list))
             tmp_list = []
-        if not create_new_part:
+        if create_new_part:
+            part1_list.append(DocumentPart(line, part_list=[]))
+        else:
             tmp_list.append(line)
     return part1_list
 
