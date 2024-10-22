@@ -184,6 +184,25 @@ def init_part2_title_list(lines: list[str]):
             PART2_TITLE_LIST.append(line)
 
 
+def delete_paragraph(paragraph):
+    p = paragraph._element
+    p.getparent().remove(p)
+    paragraph._p = paragraph._element = None
+
+
+def clean_temp_paragraphs(paragraphs: list[Paragraph]) -> list[Paragraph]:
+    delete_start_index = None
+    delete_end_index = None
+    for i in range(len(paragraphs)):
+        if paragraphs[i].text == "===":
+            if delete_start_index is None:
+                delete_start_index = i
+            else:
+                delete_end_index = i
+    for i in range(delete_start_index, delete_end_index + 1):
+        delete_paragraph(paragraphs[i])
+
+
 def main():
     parser = ArgumentParser(description="Process some files.")
     parser.add_argument("--temp", required=True, help="Path to the template file")
@@ -216,6 +235,10 @@ def main():
             doc_add_paragraph(doc, "overview_zh", part2.overview_zh)
             doc_add_paragraph(doc, "overview_end1")
             doc_add_paragraph(doc, "overview_end2")
+    doc.save(args.doc)
+
+    doc = Document(args.doc)
+    clean_temp_paragraphs(doc.paragraphs)
     doc.save(args.doc)
 
 
